@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.10.0">Jekyll</generator><link href="c-ldwc.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="c-ldwc.github.io/" rel="alternate" type="text/html" /><updated>2024-11-17T10:58:16+11:00</updated><id>c-ldwc.github.io/feed.xml</id><title type="html">C Ludowici Portfolio</title><subtitle></subtitle><author><name>C Ludowici</name></author><entry><title type="html">Welcome to Jekyll!</title><link href="c-ldwc.github.io/jekyll/update/welcome-to-jekyll/" rel="alternate" type="text/html" title="Welcome to Jekyll!" /><published>2024-11-16T21:46:32+11:00</published><updated>2024-11-16T21:46:32+11:00</updated><id>c-ldwc.github.io/jekyll/update/welcome-to-jekyll</id><content type="html" xml:base="c-ldwc.github.io/jekyll/update/welcome-to-jekyll/"><![CDATA[<p>You’ll find this post in your <code class="language-plaintext highlighter-rouge">_posts</code> directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run <code class="language-plaintext highlighter-rouge">jekyll serve</code>, which launches a web server and auto-regenerates your site when a file is updated.</p>
+
+<p>Jekyll requires blog post files to be named according to the following format:</p>
+
+<p><code class="language-plaintext highlighter-rouge">YEAR-MONTH-DAY-title.MARKUP</code></p>
+
+<p>Where <code class="language-plaintext highlighter-rouge">YEAR</code> is a four-digit number, <code class="language-plaintext highlighter-rouge">MONTH</code> and <code class="language-plaintext highlighter-rouge">DAY</code> are both two-digit numbers, and <code class="language-plaintext highlighter-rouge">MARKUP</code> is the file extension representing the format used in the file. After that, include the necessary front matter. Take a look at the source for this post to get an idea about how it works.</p>
+
+<p>Jekyll also offers powerful support for code snippets:</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">print_hi</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+  <span class="nb">puts</span> <span class="s2">"Hi, </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+<span class="n">print_hi</span><span class="p">(</span><span class="s1">'Tom'</span><span class="p">)</span>
+<span class="c1">#=&gt; prints 'Hi, Tom' to STDOUT.</span></code></pre></figure>
+
+<p>Check out the <a href="https://jekyllrb.com/docs/home">Jekyll docs</a> for more info on how to get the most out of Jekyll. File all bugs/feature requests at <a href="https://github.com/jekyll/jekyll">Jekyll’s GitHub repo</a>. If you have questions, you can ask them on <a href="https://talk.jekyllrb.com/">Jekyll Talk</a>.</p>]]></content><author><name>C Ludowici</name></author><category term="jekyll" /><category term="update" /><summary type="html"><![CDATA[You’ll find this post in your _posts directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run jekyll serve, which launches a web server and auto-regenerates your site when a file is updated.]]></summary></entry><entry><title type="html">Hamiltonian Monte Carlo</title><link href="c-ldwc.github.io/jekyll/update/Linear-Regression/" rel="alternate" type="text/html" title="Hamiltonian Monte Carlo" /><published>2024-11-16T21:46:32+11:00</published><updated>2024-11-16T21:46:32+11:00</updated><id>c-ldwc.github.io/jekyll/update/Linear-Regression</id><content type="html" xml:base="c-ldwc.github.io/jekyll/update/Linear-Regression/"><![CDATA[<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+  </script>
+
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+<p>$\renewcommand{\hat}[1]{\widehat{#1}}$</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># %conda install tqdm==4.66.5 scipy==1.13.1 plotly==5.24.1 numpy==1.26.4 pandas==2.2.2 openblas==0.3.21 matplotlib
+</span></code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="c1"># import plotly.graph_objects as go
+# from plotly.subplots import make_subplots
+</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span><span class="p">,</span> <span class="n">multivariate_normal</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="n">beta</span>
+
+<span class="kn">from</span> <span class="nn">samplers</span> <span class="kn">import</span> <span class="n">hmc</span><span class="p">,</span> <span class="n">metro_hastings</span><span class="p">,</span> <span class="n">R_hat</span><span class="p">,</span> <span class="n">plot_chains</span><span class="p">,</span> <span class="n">param_scatter</span>
+
+<span class="n">n_iters</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="mi">9</span>
+<span class="n">p</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">n_param</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span>
+</code></pre></div></div>
+<!--more-->
+<p>Markov Chain Monte Carlo (MCMC) algorithms draw samples from target probability distributions. The resulting samples can be used to approximate integrals (i.e. expectations) over the distribution being targeted. They are the workhorse of Bayesian computation, where posteriors are often too complex to solve without algorithmic tools, and are responsible for computation in the popular Bayesian software packages Stan and PyMC.</p>
+
+<p>I use PyMC fairly regularly, but my understanding of the MCMC algo used by it was largely based on intuition. The analyses in the notebooks in this folder (<code class="language-plaintext highlighter-rouge">Portfolio/MCMC/</code>) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.
+<!--more--></p>
+
+<p>The HMC algorithm is based on the exposition in <a href="https://stat.columbia.edu/~gelman/book/">Gelman et al.</a> chapters 10, 11, and 12. The MCMC functions live in <code class="language-plaintext highlighter-rouge">samplers/samplers.py</code>. There are some MCMC diagnostics in <code class="language-plaintext highlighter-rouge">samplers/utils.py</code></p>
+
+<p>The <code class="language-plaintext highlighter-rouge">hmc</code> function is a Hamiltonian Monte Carlo (HMC) sampler.  It requires</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">log_prob</code>: an unnormed log probability for the distribution of interest,</li>
+  <li><code class="language-plaintext highlighter-rouge">data</code>: a dictionary of data and parameters to pass to that log_prob. This is evaluated as part of each iteration of the algorithm</li>
+  <li><code class="language-plaintext highlighter-rouge">grad</code>: the gradient of the distribution with regard to the parameters and a starting point for the parameter samples.</li>
+  <li><code class="language-plaintext highlighter-rouge">n_iters</code>: the number of iterations for the algorithm</li>
+  <li><code class="language-plaintext highlighter-rouge">starting</code>: a starting point for the samples</li>
+  <li><code class="language-plaintext highlighter-rouge">eps</code>, <code class="language-plaintext highlighter-rouge">L</code>, <code class="language-plaintext highlighter-rouge">M</code>: Tuning parameters for the algorithms Hamiltonian dynamics. See <a href="https://stat.columbia.edu/~gelman/book/">Gelman et al.</a> chapter 12.</li>
+</ul>
+
+<p>To see how it works, imagine we want to use it to draw samples from a $\beta(3,5)$ distribution. We would never use MCMC for this in practice, because simpler methods like the ratio of gamma variables exist for Beta sampling, but it is a nice example of how these algorithms work.</p>
+
+<p>The algorithm works best if its sample space is unbounded, so I use the logistic function to map the real line to the support of the Beta distribution. The distribution’s normalisation constant by definition doesn’t depend on $x$ and we can ignore it for the purposes of the algorithm, so we use the unnormalised log density for the Beta distribution</p>
+
+\[f(x, a, b) = (a-1) \dot \log(l(x)) + (b-1) \dot \log(1-l(x))\]
+
+<p>Where $l$ is the inverse logit function</p>
+
+\[l(x) =  \frac{1}{1+\exp(-x)}\]
+
+<p>so $l(x) \in [0,1]$.</p>
+
+<p>We need the derivative for this function in order to use HMC. It is</p>
+
+\[\frac{\partial f(x,a,b)}{\partial x} = \left(\frac{a-1}{l(x)} - \frac{b-1}{1-l(x)}\right) l(x)^2 \exp(-x)\]
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">inv_logit</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="k">return</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">log_prob_beta</span><span class="p">(</span><span class="n">proposal</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">inv_logit</span><span class="p">(</span><span class="n">proposal</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">grad_beta</span><span class="p">(</span><span class="n">proposal</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="n">inv_lgt_grad</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">proposal</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">proposal</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">inv_logit</span><span class="p">(</span><span class="n">proposal</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">a</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="n">b</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="p">))</span> <span class="o">*</span> <span class="n">inv_lgt_grad</span>
+
+<span class="n">samples</span> <span class="o">=</span> <span class="n">hmc</span><span class="p">(</span>
+        <span class="n">M</span><span class="o">=</span><span class="p">.</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s">"a"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s">"b"</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
+        <span class="n">grad</span><span class="o">=</span><span class="n">grad_beta</span><span class="p">,</span>
+        <span class="n">n_iter</span><span class="o">=</span><span class="n">n_iters</span><span class="p">,</span>
+        <span class="n">log_prob</span><span class="o">=</span><span class="n">log_prob_beta</span><span class="p">,</span>
+        <span class="n">starting</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">eps</span><span class="o">=</span><span class="p">.</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">L</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>100%|█████████████████████████████████████████| 29/29 [00:00&lt;00:00, 1140.88it/s]
+</code></pre></div></div>
+
+<p>This results in the following chain of samples. The top plot is the untransformed variable. The lower plot is the inverse logit transformed variable. We can see that it’s mapped to $[0,1]$ and concentrating around the top part of the interval</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">warmup</span><span class="p">,</span> <span class="n">n_iters</span><span class="p">),</span> <span class="n">samples</span><span class="p">[</span><span class="n">warmup</span><span class="p">:])</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">set_title</span><span class="p">(</span><span class="s">'Samples'</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">warmup</span><span class="p">,</span> <span class="n">n_iters</span><span class="p">),</span> <span class="n">inv_logit</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="n">warmup</span><span class="p">:]))</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">set_title</span><span class="p">(</span><span class="s">'Transformed Samples'</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">tight_layout</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><img src="c-ldwc.github.io/assets/images/output_6_1.png" alt="png" /></p>
+
+<p>The sample mean is close to the true mean of 0.625. The quantiles and histogram of the samples are also in accordance with the expected shape.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"sample mean </span><span class="si">{</span><span class="n">inv_logit</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="n">warmup</span><span class="si">:</span><span class="p">]).</span><span class="n">mean</span><span class="p">()</span><span class="si">}</span><span class="s">, true mean </span><span class="si">{</span><span class="mi">5</span><span class="o">/</span><span class="mi">8</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"true .25, .5 and .75 quantiles </span><span class="si">{</span><span class="n">np</span><span class="p">.</span><span class="nb">round</span><span class="p">((</span><span class="n">beta</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">).</span><span class="n">ppf</span><span class="p">(.</span><span class="mi">25</span><span class="p">),</span><span class="n">beta</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">).</span><span class="n">ppf</span><span class="p">(.</span><span class="mi">5</span><span class="p">),</span> <span class="n">beta</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">).</span><span class="n">ppf</span><span class="p">(.</span><span class="mi">75</span><span class="p">)),</span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"sample .25, .5 and .75 quantiles </span><span class="si">{</span><span class="n">np</span><span class="p">.</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">inv_logit</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="n">warmup</span><span class="si">:</span><span class="p">]),</span> <span class="p">(.</span><span class="mi">25</span><span class="p">,</span> <span class="p">.</span><span class="mi">5</span><span class="p">,</span> <span class="p">.</span><span class="mi">75</span><span class="p">)),</span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sample mean 0.6429169248486213, true mean 0.625
+true .25, .5 and .75 quantiles [0.514 0.636 0.747]
+sample .25, .5 and .75 quantiles [0.445 0.702 0.824]
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">c</span><span class="o">=</span><span class="s">'blue'</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">hist</span><span class="p">(</span><span class="n">inv_logit</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span><span class="mi">50</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">.</span><span class="n">tight_layout</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><img src="c-ldwc.github.io/assets/images/output_9_0.png" alt="png" /></p>
+
+<h2 id="linear-regression">Linear Regression</h2>
+
+<p>This is a model for a linear regression with gaussian errors, an inverse gamma prior $\mathrm{inverse\_\Gamma}(1.5, 1)$ on the standard deviation of the errors and independent normal priors on the coefficients of the model.</p>
+
+<p>Using $X_{i\cdot}$ as the $i^{th}$ row of X, the matrix of predictors, and $\mathbf{y}$ as the vector of outcome observations. The posterior density is</p>
+
+\[p(\theta|\mathbf{y}) \propto \prod_{i=1}^{N}\frac{1}{\sigma^2} \exp \left(\frac{-(y_i - X_{i\cdot}\beta)^2}{2\sigma^2}\right) \frac{1}{\sigma^5}\exp\left({\frac{-1}{\sigma^2}}\right)\exp\left(\frac{-\beta^T\beta}{2}\right)\]
+
+<p>The gradient for the <em>log</em> posterior for the coefficients is</p>
+
+\[\sum_{i=1}^{N}\left[\frac{\left(y_i - X_{i\cdot}\beta\right)}{\sigma^2} X_{i\cdot}\right] - \beta^T\]
+
+<p>The partial derivative for sigma is</p>
+
+\[-5 - \frac{2(N-1)}{\sigma^2} + \sum_{i=1}^{N}\frac{y_i - X_{i\cdot}\beta}{\sigma^3}\]
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">proposal</span><span class="p">):</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">proposal</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">proposal</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># variance
+</span>
+    <span class="n">log_lik</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">-</span> <span class="n">data</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">prior_coef</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">proposal</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">proposal</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">prior_sigma</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.5</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="k">return</span> <span class="n">log_lik</span> <span class="o">+</span> <span class="n">prior_coef</span> <span class="o">+</span> <span class="n">prior_sigma</span>
+
+<span class="k">def</span> <span class="nf">grad</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">proposal</span><span class="p">):</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">proposal</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">proposal</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">coef_grad</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">).</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">proposal</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">sigma_grad</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="o">-</span><span class="mf">5.</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>
+    <span class="p">]</span>
+    <span class="c1"># print(sigma_grad)
+</span>    <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">r_</span><span class="p">[</span><span class="n">coef_grad</span><span class="p">,</span> <span class="n">sigma_grad</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">create_regression</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
+    <span class="n">coef</span> <span class="o">=</span> <span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">).</span><span class="n">rvs</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="n">X</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)).</span><span class="n">rvs</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">coef</span> <span class="o">+</span> <span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">).</span><span class="n">rvs</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">coef</span> <span class="o">=</span> <span class="n">coef</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">coef</span><span class="p">,</span> <span class="n">sigma</span>
+
+
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">coef</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">create_regression</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"coefficients = </span><span class="si">{</span><span class="n">coef</span><span class="p">.</span><span class="n">flatten</span><span class="p">()</span><span class="si">}</span><span class="s">, sigma = </span><span class="si">{</span><span class="n">sigma</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>coefficients = [-4.65932747  0.12537546 -0.47078479], sigma = 2
+</code></pre></div></div>
+
+<h3 id="sampling-the-posterior-and-checking-convergence">Sampling the posterior and checking convergence</h3>
+
+<p>To check that our setup converges to the desired distribution, we run the sampler 4 times. Each sampler “chain” starts from different - ideally well separated - starting points. This is tricky to set up because if our starting points are too diffuse, the algorithm will take a long time to converge. If our starting points are all together, we run the risk of getting stuck in a local maximum. To check that we have converged, we want our runs to end up in the same region of posterior space. We can check this by visual inspection and the calculation of the $\hat{R}$ value, which is a ratio of between chain and within chain variance that will converge to one if the chains have mixed in the same region of posterior space.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">chains</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">ones</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_iters</span><span class="p">,</span> <span class="n">coef</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="k">for</span> <span class="n">chain</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">chains</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">hmc</span><span class="p">(</span>
+        <span class="n">M</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_param</span><span class="p">,</span> <span class="n">n_param</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s">"data"</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span> <span class="s">"X"</span><span class="p">:</span> <span class="n">X</span><span class="p">},</span>
+        <span class="n">grad</span><span class="o">=</span><span class="n">grad</span><span class="p">,</span>
+        <span class="n">n_iter</span><span class="o">=</span><span class="n">n_iters</span><span class="p">,</span>
+        <span class="n">log_prob</span><span class="o">=</span><span class="n">log_prob</span><span class="p">,</span>
+        <span class="n">starting</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">r_</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">choice</span><span class="p">(</span><span class="n">y</span><span class="p">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">size</span> <span class="o">=</span> <span class="n">p</span><span class="p">,</span> <span class="n">replace</span> <span class="o">=</span> <span class="bp">False</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">.</span><span class="mi">5</span><span class="p">).</span><span class="n">rvs</span><span class="p">(</span><span class="mi">1</span><span class="p">))],</span>
+        <span class="n">eps</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">L</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">chains</span><span class="p">[</span><span class="n">chain</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">params</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>100%|███████████████████████████████████████████| 29/29 [00:00&lt;00:00, 89.91it/s]
+100%|███████████████████████████████████████████| 29/29 [00:00&lt;00:00, 94.91it/s]
+100%|███████████████████████████████████████████| 29/29 [00:00&lt;00:00, 89.42it/s]
+100%|███████████████████████████████████████████| 29/29 [00:00&lt;00:00, 93.78it/s]
+</code></pre></div></div>
+
+<p>The $\hat{R}$ diagnostic value (the ratio of between and within chain variance) is less than 1.1 for all variables, and the chains appear to cover the same area in the plots, indicating that we have converged to the target distribution.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">R_hat</span><span class="p">(</span><span class="n">chains</span><span class="p">,</span> <span class="n">warmup</span><span class="p">).</span><span class="nb">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array([ 3.15 ,  0.994,  1.173, 61.26 ])
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">plot_chains</span><span class="p">(</span><span class="n">chains</span><span class="p">,</span> <span class="n">warmup</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s">'coef1'</span><span class="p">,</span> <span class="s">'coef2'</span><span class="p">,</span> <span class="s">'coef3'</span><span class="p">,</span> <span class="s">'sigma'</span><span class="p">])</span>
+</code></pre></div></div>
+
+<p><img src="c-ldwc.github.io/assets/images/output_17_0.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">coef</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array([[-4.65932747],
+       [ 0.12537546],
+       [-0.47078479]])
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">samples</span> <span class="o">=</span> <span class="n">chains</span><span class="p">[:,</span> <span class="n">warmup</span><span class="p">:,</span> <span class="p">:].</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_iters</span> <span class="o">-</span> <span class="n">warmup</span><span class="p">),</span> <span class="n">n_param</span><span class="p">)</span>
+
+<span class="n">post_mu</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">samples</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="n">T</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">param_scatter</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">warmup</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s">"coef1"</span><span class="p">,</span> <span class="s">"coef2"</span><span class="p">,</span> <span class="s">"coef3"</span><span class="p">,</span> <span class="s">"sigma"</span><span class="p">],</span> <span class="n">plot_params</span> <span class="o">=</span> <span class="p">{</span><span class="s">'alpha'</span><span class="p">:.</span><span class="mi">4</span><span class="p">,</span> <span class="s">'s'</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="s">'c'</span><span class="p">:</span><span class="s">'k'</span><span class="p">})</span>
+</code></pre></div></div>
+
+<p><img src="c-ldwc.github.io/assets/images/output_20_0.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">coef</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array([[-4.65932747],
+       [ 0.12537546],
+       [-0.47078479]])
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">samples</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array([-1.15886742e+00,  2.09020217e-01, -2.31659725e-01,  5.48781018e+02])
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">np</span><span class="p">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array([[  -4.6374634 ,   -2.43352556,   -1.92287586,    1.86039058],
+       [   1.631988  ,    2.34560329,    1.84893618, 1474.37553528]])
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># post_preds = norm(post_mu, samples[:, -1]).rvs((1000, 4 * (n_iters - warmup)))
+</span>
+<span class="c1"># post_pred_errors = post_preds - y.reshape(-1, 1)
+</span>
+<span class="c1"># rand_obs = np.random.choice(range(y.shape[0]), 6, replace=False)
+</span>
+<span class="c1"># fig = make_subplots(3, 2)
+</span>
+<span class="c1"># for i, obs in enumerate(rand_obs):
+#     # print(f"i {i} row {(i)//2 + 1} , col {(i) % 2 }")
+#     fig.add_trace(
+#         go.Histogram(x=post_pred_errors[obs]), row=(i) // 2 + 1, col=(i) % 2 + 1
+#     )
+</span>
+<span class="c1">#     fig.add_vline(x=0, row=(i) // 2 + 1, col=(i) % 2 + 1)
+#     print(np.mean(post_pred_errors[obs] &gt; 0))
+</span>
+<span class="c1"># fig.show()
+</span></code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>---------------------------------------------------------------------------
+
+NameError                                 Traceback (most recent call last)
+
+Cell In[18], line 7
+      3 post_pred_errors = post_preds - y.reshape(-1, 1)
+      5 rand_obs = np.random.choice(range(y.shape[0]), 6, replace=False)
+----&gt; 7 fig = make_subplots(3, 2)
+      9 for i, obs in enumerate(rand_obs):
+     10     # print(f"i {i} row {(i)//2 + 1} , col {(i) % 2 }")
+     11     fig.add_trace(
+     12         go.Histogram(x=post_pred_errors[obs]), row=(i) // 2 + 1, col=(i) % 2 + 1
+     13     )
+
+
+NameError: name 'make_subplots' is not defined
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># A = 1 / 25 * X.T @ X + np.eye(coef.shape[0], coef.shape[0])
+# A_inv = np.linalg.inv(A)
+</span>
+<span class="c1"># w = 1 / 25 * A_inv @ X.T @ y.flatten()
+# post = multivariate_normal(w, A_inv)
+</span>
+<span class="c1"># an_pts = 150
+</span>
+<span class="c1"># x_plot = np.linspace(
+#     params[warmup:, 0].min() - 0.05, params[warmup:, 0].max() + 0.05, n_pts
+# )
+# y_plot = np.linspace(
+#     params[warmup:, 1].min() - 0.05, params[warmup:, 1].max() + 0.05, n_pts
+# )
+</span>
+<span class="c1"># z = np.ones((n_pts, n_pts))
+</span>
+<span class="c1"># for i in tqdm(range(n_pts)):
+#     for j in range(n_pts):
+#         z[i, j] = post.pdf([x_plot[j], y_plot[i]])
+</span></code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># A_inv
+</span></code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># fig = go.Figure(go.Contour(x=x_plot, y=y_plot, z=z, ncontours=50))
+</span>
+<span class="c1"># fig.add_scatter(x=params[warmup:, 0], y=params[warmup:, 1], opacity=0.4, mode="markers")
+</span></code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>]]></content><author><name>C Ludowici</name></author><category term="jekyll" /><category term="update" /><summary type="html"><![CDATA[Hamiltonian Monte Carlo From Scratch in Python]]></summary></entry></feed>
