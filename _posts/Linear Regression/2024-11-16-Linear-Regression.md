@@ -120,7 +120,7 @@ fig.tight_layout();
 
 
     
-![png]({{ site.url }}/assets/images/output_6_1.png)
+![png](/assets/images/output_6_1.png)
     
 
 
@@ -153,7 +153,7 @@ fig.tight_layout();
 
 
     
-![png]({{ site.url }}/assets/images/output_9_0.png)
+![png](output_9_0.png)
     
 
 
