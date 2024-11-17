@@ -113,9 +113,9 @@ analytics:
 
 # Site Author
 author:
-  name             : "C Ludowici"
-  avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "MLS/DS at EG"
+  name             : "C Ludowici, PhD"
+  avatar           : "/assets/images/bio.jpeg"
+  bio              : "Machine Learning Scientist at EG. Previously cognitive science at UC Berkeley"
   location         : "Sydney"
   email            :
   links:
@@ -133,7 +133,7 @@ author:
       # url: "https://facebook.com/"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      # url: "https://github.com/"
+      url: "https://github.com/c-ldwc/"
     - label: "Instagram"
       icon: "fab fa-fw fa-instagram"
       # url: "https://instagram.com/"

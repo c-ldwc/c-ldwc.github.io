@@ -2,7 +2,7 @@
 layout: post
 title:  "Hamiltonian Monte Carlo"
 date:   2024-11-16 21:46:32 +1100
-categories: jekyll update
+categories: MCMC
 layout: single
 classes: wide
 excerpt: "Hamiltonian Monte Carlo From Scratch in Python"
@@ -49,19 +49,19 @@ Markov Chain Monte Carlo (MCMC) algorithms draw samples from target probability 
 
 I use PyMC fairly regularly, but my understanding of the MCMC algo it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in this folder (`Portfolio/MCMC/`) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.
 
-The HMC algorithm is based on the exposition in [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapters 10, 11, and 12. The MCMC functions live in `samplers/samplers.py`. There are some MCMC diagnostics in `samplers/utils.py`
+The HMC algorithm is based on the exposition in [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapters 10, 11, and 12. The MCMC functions live in [my portfolio's github repo](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers). The samplers are in [`samplers/samplers.py`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/samplers.py). There are some MCMC diagnostics in [`samplers/utils.py`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/utils.py)
 
 The `hmc` function is a Hamiltonian Monte Carlo (HMC) sampler.  It requires 
-- `log_prob`: an unnormed log probability for the distribution of interest, 
+- `log_prob`: an unnormalised log probability for the distribution of interest, 
 - `data`: a dictionary of data and parameters to pass to that log_prob. This is evaluated as part of each iteration of the algorithm
 - `grad`: the gradient of the distribution with regard to the parameters and a starting point for the parameter samples. 
 - `n_iters`: the number of iterations for the algorithm
 - `starting`: a starting point for the samples
 - `eps`, `L`, `M`: Tuning parameters for the algorithms Hamiltonian dynamics. See [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapter 12.
 
-The algorithm generates a "momentum" variable at the start of each iteration. It uses this and the gradient to explore the target log density through a discrete approximation to hamiltonian dynamics in physics. At the end of an iteration, it computes a ratio $r$ of the target density at the starting values and the final location of the iteration. It accepts the new location as a sample with probability $\min(r,1)$ - this is the same as the Metropolis Hastings algorithm's acceptance step. This means that normalisation constants cancel and we can work with unnormalised log densities as our target algorithm. 
+The algorithm generates a "momentum" variable at the start of each iteration. It uses this and the gradient to explore the target log density through a discrete approximation to hamiltonian dynamics in physics. At the end of an iteration, it computes a ratio $r$ of the target density at the starting values and the final location of the iteration. It accepts the new location as a sample with probability $\min(r,1)$ - this is the same as the Metropolis Hastings algorithm's acceptance step. This means that normalisation constants cancel and we can work with unnormalised log densities as our target function. 
 
-At the end of the interations, we have a "chain" of samples. A properly-tuned HMC run will converge to the target density, but that convergence takes time, so we drop a fixed number of starting iterations as a "warmup". Convergence to the target density can be measured by visual and diagnostic tests that I discuss later.
+At the end of the iterations, we have a "chain" of samples. A properly-tuned HMC run will converge to the target density, but that convergence takes time, so we drop a fixed number of starting iterations as a "warmup". Convergence to the target density can be measured by visual and diagnostic tests that I discuss later.
 
 ## Sampling From a Beta Distribution
 
@@ -165,11 +165,12 @@ fig.tight_layout();
     
 
 
-## Linear Regression
+## Bayesian Linear Regression
 
-This is a model for a linear regression with gaussian errors, an inverse gamma prior $\mathrm{inv\_\Gamma}(1.5, 1)$ on the standard deviation of the errors and independent normal priors on the coefficients of the model.
+In this section I run the algorithm to sample from a fairly straightforward Bayesian linear regression. The regression contains gaussian errors, an inverse gamma prior $\mathrm{inv\\_\Gamma}(1.5, 1)$ on the standard deviation of the errors and independent standard normal priors on the coefficients of the model.
 
 Using $X_{i\cdot}$ as the $i^{th}$ row of X, the matrix of predictors, and $\mathbf{y}$ as the vector of outcome observations. The posterior density is
+
 $$p(\theta|\mathbf{y}) \propto \prod_{i=1}^{N}\frac{1}{\sigma^2} \exp \left(\frac{-(y_i - X_{i\cdot}\beta)^2}{2\sigma^2}\right) \frac{1}{\sigma^5}\exp\left({\frac{-1}{\sigma^2}}\right)\exp\left(\frac{-\beta^T\beta}{2}\right)$$
 
 The gradient for the _log_ posterior for the coefficients is 
@@ -313,7 +314,7 @@ param_scatter(
 ## Computing things we care about
 Using these samples we can estimate the expection of whatever function of the samples that we like. First, we need to drop the warmup samples and eliminate the chain dimension from our chains variable. We did this above when creating `params`.
 
-Firstly, we We can see that the sample means are close to the true values. 
+Firstly, we can see that the sample means are close to the true values. 
 
 
 ```python
@@ -395,21 +396,21 @@ fig.tight_layout();
 
 [^1]: The density for the logit $y$ of the Beta variable is 
 
-$$f(y|a,b) = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}l(y)^{a-1}(1-l(y))^{b-1}l(y)^2\exp(-y)$$
+    $$f(y|a,b) = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}l(y)^{a-1}(1-l(y))^{b-1}l(y)^2\exp(-y)$$
 
-Where $l$ is the inverse logit function
+    Where $l$ is the inverse logit function
 
-$$l(x) =  \frac{1}{1+\exp(-x)} $$
+    $$l(x) =  \frac{1}{1+\exp(-x)} $$
 
-The distribution's normalisation constant by definition doesn't depend on $x$ and we can ignore it for the purposes of the algorithm, so we use the unnormalised log density for the Beta distribution
+    The distribution's normalisation constant by definition doesn't depend on $x$ and we can ignore it for the purposes of the algorithm, so we use the unnormalised log density for the Beta distribution
 
-$$ f(y, a, b) = (a-1) \dot \log\left[l(y)\right] + (b-1) \dot \log\left[1-l(y)\right] - y - 2\log\left[1+\exp(-y)\right]$$
-
-
+    $$ f(y, a, b) = (a-1) \dot \log\left[l(y)\right] + (b-1) \dot \log\left[1-l(y)\right] - y - 2\log\left[1+\exp(-y)\right]$$
 
 
-so $l(x) \in [0,1]$.
 
-We need the derivative for this function in order to use HMC. It is 
 
-$$\frac{\partial f(y|a,b)}{\partial y} = \left(\frac{a-1}{l(y)} - \frac{b-1}{1-l(y)}\right) l(y)^2 \exp(-y) - 1 + 2l(y)\exp(-y)$$
+    so $l(x) \in [0,1]$.
+
+    We need the derivative for this function in order to use HMC. It is 
+
+    $$\frac{\partial f(y|a,b)}{\partial y} = \left(\frac{a-1}{l(y)} - \frac{b-1}{1-l(y)}\right) l(y)^2 \exp(-y) - 1 + 2l(y)\exp(-y)$$
