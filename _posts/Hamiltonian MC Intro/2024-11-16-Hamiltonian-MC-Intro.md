@@ -111,7 +111,7 @@ fig.tight_layout();
 
 
     
-![png](assets/images/output_6_0.png)
+![png](/assets/images/output_6_0.png)
     
 
 
@@ -144,7 +144,7 @@ fig.tight_layout();
 
 
     
-![png](assets/images/output_9_0.png)
+![png](/assets/images/output_9_0.png)
     
 
 
@@ -263,7 +263,7 @@ plot_chains(chains, warmup, names = ['coef1', 'coef2', 'coef3', 'sigma'])
 
 
     
-![png](assets/images/output_17_0.png)
+![png](/assets/images/output_17_0.png)
     
 
 
@@ -295,7 +295,7 @@ param_scatter(samples, warmup=0, names=["coef1", "coef2", "coef3", "sigma"], plo
 
 
     
-![png](assets/images/output_20_0.png)
+![png](/assets/images/output_20_0.png)
     
 
 
