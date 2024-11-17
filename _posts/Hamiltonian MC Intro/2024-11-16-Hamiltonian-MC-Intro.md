@@ -22,6 +22,7 @@ use_math: true
   </script>
 <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
  $\renewcommand{\hat}[1]{\widehat{#1}}$
+
 ```python
 # %conda install tqdm==4.66.5 scipy==1.13.1 plotly==5.24.1 numpy==1.26.4 pandas==2.2.2 openblas==0.3.21 matplotlib
 ```
@@ -29,8 +30,6 @@ use_math: true
 
 ```python
 import numpy as np
-# import plotly.graph_objects as go
-# from plotly.subplots import make_subplots
 
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -39,16 +38,15 @@ from scipy.stats import norm, multivariate_normal, uniform, beta
 
 from samplers import hmc, metro_hastings, R_hat, plot_chains, param_scatter
 
-n_iters = 30
-warmup = 9
+n_iters = 3000
+warmup = 1000
 p = 3
 n_param = p + 1
 ```
-<!--more-->
+
 Markov Chain Monte Carlo (MCMC) algorithms draw samples from target probability distributions. The resulting samples can be used to approximate integrals (i.e. expectations) over the distribution being targeted. They are the workhorse of Bayesian computation, where posteriors are often too complex to solve without algorithmic tools, and are responsible for computation in the popular Bayesian software packages Stan and PyMC. 
 
-I use PyMC fairly regularly, but my understanding of the MCMC algo used by it was largely based on intuition. The analyses in the notebooks in this folder (`Portfolio/MCMC/`) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.
-<!--more-->
+I use PyMC fairly regularly, but my understanding of the MCMC algo it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in this folder (`Portfolio/MCMC/`) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.
 
 The HMC algorithm is based on the exposition in [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapters 10, 11, and 12. The MCMC functions live in `samplers/samplers.py`. There are some MCMC diagnostics in `samplers/utils.py`
 
@@ -61,22 +59,15 @@ The `hmc` function is a Hamiltonian Monte Carlo (HMC) sampler.  It requires
 - `eps`, `L`, `M`: Tuning parameters for the algorithms Hamiltonian dynamics. See [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapter 12.
 
 
-To see how it works, imagine we want to use it to draw samples from a $\beta(3,5)$ distribution. We would never use MCMC for this in practice, because simpler methods like the ratio of gamma variables exist for Beta sampling, but it is a nice example of how these algorithms work.
+The algorithm generates a "momentum" variable at the start of each iteration. It uses this and the gradient to explore the target log density through a discrete approximation to hamiltonian dynamics in physics. At the end of an iteration, it computes a ratio $r$ of the target density at the starting values and the final location of the iteration. It accepts the new location as a sample with probability $\min(r,1)$ - this is the same as the Metropolis Hastings algorithm's acceptance step. This means that normalisation constants cancel and we can work with unnormalised log densities as our target algorithm. 
 
-The algorithm works best if its sample space is unbounded, so I use the logistic function to map the real line to the support of the Beta distribution. The distribution's normalisation constant by definition doesn't depend on $x$ and we can ignore it for the purposes of the algorithm, so we use the unnormalised log density for the Beta distribution
+At the end of the interations, we have a "chain" of samples. A properly-tuned HMC run will converge to the target density, but that convergence takes time, so we drop a fixed number of starting iterations as a "warmup". Convergence to the target density can be measured by visual and diagnostic tests that I discuss later.
 
-$$ f(x, a, b) = (a-1) \dot \log(l(x)) + (b-1) \dot \log(1-l(x))$$
+## Sampling From a Beta Distribution
 
+To see how it works, imagine we want to use it to draw samples from a Beta(x\|a = 3,b = 5) distribution. We would never use MCMC for this in practice, because simpler methods like the ratio of gamma variables exist for Beta sampling, but it is a nice example of how these algorithms work.
 
-Where $l$ is the inverse logit function
-
-$$l(x) =  \frac{1}{1+\exp(-x)} $$
-
-so $l(x) \in [0,1]$.
-
-We need the derivative for this function in order to use HMC. It is 
-
-$$\frac{\partial f(x,a,b)}{\partial x} = \left(\frac{a-1}{l(x)} - \frac{b-1}{1-l(x)}\right) l(x)^2 \exp(-x)$$
+The algorithm works best if its sample space is unbounded so the search doesn't reach areas of zero density. I use the logistic function to achieve this by mapping the real line to the support of the Beta distribution. The details of the derivation are in a footnote [^1] 
 
 
 ```python
@@ -84,26 +75,26 @@ def inv_logit(x): return 1/(1+np.exp(-x))
 
 def log_prob_beta(proposal, a, b):
     x = inv_logit(proposal)
-    return (a-1)*np.log(x) + (b - 1)*np.log(1-x)
+    return (a-1)*np.log(x) + (b - 1)*np.log(1-x)-proposal-2*np.log(1+np.exp(-proposal))
 
 def grad_beta(proposal, a, b):
     inv_lgt_grad = 1/(1+np.exp(-proposal))**2 * np.exp(-proposal)
     x = inv_logit(proposal)
-    return ((a-1)/x - (b-1)/(1-x)) * inv_lgt_grad
+    return ((a-1)/x - (b-1)/(1-x)) * inv_lgt_grad - 1 + 2*np.exp(-proposal)/(1+np.exp(-proposal))
 
 samples = hmc(
-        M=.5,
+        M=1.,
         data={"a": 5, "b": 3},
         grad=grad_beta,
         n_iter=n_iters,
         log_prob=log_prob_beta,
         starting=[0],
-        eps=.1,
-        L=10,
+        eps=.01,
+        L=100,
     )
 ```
 
-    100%|█████████████████████████████████████████| 29/29 [00:00<00:00, 1140.88it/s]
+    accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:13<00:00, 218.70it/s]
 
 
 This results in the following chain of samples. The top plot is the untransformed variable. The lower plot is the inverse logit transformed variable. We can see that it's mapped to $[0,1]$ and concentrating around the top part of the interval
@@ -120,7 +111,7 @@ fig.tight_layout();
 
 
     
-![png](/assets/images/output_6_1.png)
+![png](output_6_0.png)
     
 
 
@@ -133,9 +124,9 @@ print(f"true .25, .5 and .75 quantiles {np.round((beta(5,3).ppf(.25),beta(5,3).p
 print(f"sample .25, .5 and .75 quantiles {np.round(np.quantile(inv_logit(samples[warmup:]), (.25, .5, .75)),3)}")
 ```
 
-    sample mean 0.6429169248486213, true mean 0.625
+    sample mean 0.6268913144573977, true mean 0.625
     true .25, .5 and .75 quantiles [0.514 0.636 0.747]
-    sample .25, .5 and .75 quantiles [0.445 0.702 0.824]
+    sample .25, .5 and .75 quantiles [0.51  0.645 0.744]
 
 
 
@@ -153,16 +144,15 @@ fig.tight_layout();
 
 
     
-![png](/assets/images/output_9_0.png)
+![png](output_9_0.png)
     
 
 
 ## Linear Regression
 
-This is a model for a linear regression with gaussian errors, an inverse gamma prior $\mathrm{inverse\\_\Gamma}(1.5, 1)$ on the standard deviation of the errors and independent normal priors on the coefficients of the model.
+This is a model for a linear regression with gaussian errors, an inverse gamma prior $\mathrm{inv\\_\Gamma}(1.5, 1)$ on the standard deviation of the errors and independent normal priors on the coefficients of the model.
 
 Using $X_{i\cdot}$ as the $i^{th}$ row of X, the matrix of predictors, and $\mathbf{y}$ as the vector of outcome observations. The posterior density is
-
 $$p(\theta|\mathbf{y}) \propto \prod_{i=1}^{N}\frac{1}{\sigma^2} \exp \left(\frac{-(y_i - X_{i\cdot}\beta)^2}{2\sigma^2}\right) \frac{1}{\sigma^5}\exp\left({\frac{-1}{\sigma^2}}\right)\exp\left(\frac{-\beta^T\beta}{2}\right)$$
 
 The gradient for the _log_ posterior for the coefficients is 
@@ -203,7 +193,7 @@ def grad(data, X, proposal):
 
 
 def create_regression(N=1000, p=2, sigma = 2):
-    coef = uniform(-5,10).rvs(p)
+    coef = uniform(-2,4).rvs(p)
 
     X = multivariate_normal(np.zeros(p), np.eye(p, p)).rvs(N)
 
@@ -221,7 +211,7 @@ X, y, coef, sigma = create_regression(N=1000, p=p)
 print(f"coefficients = {coef.flatten()}, sigma = {sigma}")
 ```
 
-    coefficients = [-4.65932747  0.12537546 -0.47078479], sigma = 2
+    coefficients = [ 0.72436258 -0.73060936 -1.74381374], sigma = 2
 
 
 ### Sampling the posterior and checking convergence
@@ -246,10 +236,10 @@ for chain in range(chains.shape[0]):
     chains[chain, :, :] = params
 ```
 
-    100%|███████████████████████████████████████████| 29/29 [00:00<00:00, 89.91it/s]
-    100%|███████████████████████████████████████████| 29/29 [00:00<00:00, 94.91it/s]
-    100%|███████████████████████████████████████████| 29/29 [00:00<00:00, 89.42it/s]
-    100%|███████████████████████████████████████████| 29/29 [00:00<00:00, 93.78it/s]
+    accept rate: 0.998: 100%|██████████████████| 2999/2999 [00:25<00:00, 117.40it/s]
+    accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:25<00:00, 116.75it/s]
+    accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:25<00:00, 117.08it/s]
+    accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:25<00:00, 116.92it/s]
 
 
 The $\hat{R}$ diagnostic value (the ratio of between and within chain variance) is less than 1.1 for all variables, and the chains appear to cover the same area in the plots, indicating that we have converged to the target distribution.
@@ -262,7 +252,7 @@ R_hat(chains, warmup).round(3)
 
 
 
-    array([ 3.15 ,  0.994,  1.173, 61.26 ])
+    array([1.   , 1.   , 1.001, 1.   ])
 
 
 
@@ -273,7 +263,7 @@ plot_chains(chains, warmup, names = ['coef1', 'coef2', 'coef3', 'sigma'])
 
 
     
-![png](/assets/images/output_17_0.png)
+![png](output_17_0.png)
     
 
 
@@ -285,9 +275,9 @@ coef
 
 
 
-    array([[-4.65932747],
-           [ 0.12537546],
-           [-0.47078479]])
+    array([[ 0.72436258],
+           [-0.73060936],
+           [-1.74381374]])
 
 
 
@@ -305,7 +295,7 @@ param_scatter(samples, warmup=0, names=["coef1", "coef2", "coef3", "sigma"], plo
 
 
     
-![png](/assets/images/output_20_0.png)
+![png](output_20_0.png)
     
 
 
@@ -317,9 +307,9 @@ coef
 
 
 
-    array([[-4.65932747],
-           [ 0.12537546],
-           [-0.47078479]])
+    array([[ 0.72436258],
+           [-0.73060936],
+           [-1.74381374]])
 
 
 
@@ -331,7 +321,7 @@ samples.mean(axis=0)
 
 
 
-    array([-1.15886742e+00,  2.09020217e-01, -2.31659725e-01,  5.48781018e+02])
+    array([ 0.76133636, -0.64949313, -1.6823038 ,  2.06149481])
 
 
 
@@ -343,8 +333,8 @@ np.quantile(samples, (0.025, 0.975), axis=0)
 
 
 
-    array([[  -4.6374634 ,   -2.43352556,   -1.92287586,    1.86039058],
-           [   1.631988  ,    2.34560329,    1.84893618, 1474.37553528]])
+    array([[ 0.63253292, -0.77928289, -1.80824712,  1.93608431],
+           [ 0.88583829, -0.5211314 , -1.55216088,  2.20137753]])
 
 
 
@@ -374,25 +364,6 @@ np.quantile(samples, (0.025, 0.975), axis=0)
 
 # fig.show()
 ```
-
-
-    ---------------------------------------------------------------------------
-
-    NameError                                 Traceback (most recent call last)
-
-    Cell In[18], line 7
-          3 post_pred_errors = post_preds - y.reshape(-1, 1)
-          5 rand_obs = np.random.choice(range(y.shape[0]), 6, replace=False)
-    ----> 7 fig = make_subplots(3, 2)
-          9 for i, obs in enumerate(rand_obs):
-         10     # print(f"i {i} row {(i)//2 + 1} , col {(i) % 2 }")
-         11     fig.add_trace(
-         12         go.Histogram(x=post_pred_errors[obs]), row=(i) // 2 + 1, col=(i) % 2 + 1
-         13     )
-
-
-    NameError: name 'make_subplots' is not defined
-
 
 
 ```python
@@ -434,6 +405,27 @@ np.quantile(samples, (0.025, 0.975), axis=0)
 ```python
 
 ```
+
+[^1]: The density for the logit $y$ of the Beta variable is 
+
+    $$f(y|a,b) = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}l(y)^{a-1}(1-l(y))^{b-1}l(y)^2\exp(-y)$$
+
+    Where $l$ is the inverse logit function
+
+    $$l(x) =  \frac{1}{1+\exp(-x)} $$
+
+    The distribution's normalisation constant by definition doesn't depend on $x$ and we can ignore it for the purposes of the algorithm, so we use the unnormalised log density for the Beta distribution
+
+    $$ f(y, a, b) = (a-1) \dot \log\left[l(y)\right] + (b-1) \dot \log\left[1-l(y)\right] - y - 2\log\left[1+\exp(-y)\right]$$
+
+
+
+
+    so $l(x) \in [0,1]$.
+
+    We need the derivative for this function in order to use HMC. It is 
+
+    $$\frac{\partial f(y|a,b)}{\partial y} = \left(\frac{a-1}{l(y)} - \frac{b-1}{1-l(y)}\right) l(y)^2 \exp(-y) - 1 + 2l(y)\exp(-y)$$
 
 
 ```python
