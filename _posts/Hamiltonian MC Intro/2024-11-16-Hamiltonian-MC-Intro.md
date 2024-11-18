@@ -181,11 +181,11 @@ $$p(\theta|\mathbf{y}) \propto \prod_{i=1}^{N}\left[\frac{1}{\exp(k/2)} \exp \le
 
 Ignoring the normalisation constant, the log posterior is 
 
-$$ \frac{-Nk}{2} + \sum_{i=1}^{N}\frac{(y_i - X_{i\cdot}\beta)^2}{2exp(k)} - 1.5k -\exp(-k) - \frac{\beta^T\beta}{2}$$
+$$ \frac{-Nk}{2} - \sum_{i=1}^{N}\frac{(y_i - X_{i\cdot}\beta)^2}{2exp(k)} - 1.5k -\exp(-k) - \frac{\beta^T\beta}{2}$$
 
 The gradient for the coefficients is thus
 
-$$\sum_{i=1}^{N}\left[\frac{\left(y_i - X_{i\cdot}\beta\right)}{\exp(k)} X_{i\cdot}\right] - \beta^T$$
+$$\sum_{i=1}^{N}\left[\frac{\left(y_i - X_{i\cdot}\beta\right)}{\exp(k)} X_{i\cdot}^T\right] - \beta$$
 
 The partial derivative for $k$ is 
 
