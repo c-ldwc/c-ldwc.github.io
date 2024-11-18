@@ -39,7 +39,7 @@ from scipy.stats import norm, multivariate_normal, uniform, beta
 
 from samplers import hmc, metro_hastings, R_hat, plot_chains, param_scatter
 
-n_iters = 3000
+n_iters = 2000
 warmup = 1000
 p = 3
 n_param = p + 1
@@ -49,23 +49,23 @@ Markov Chain Monte Carlo (MCMC) algorithms draw samples from target probability 
 
 I use PyMC fairly regularly, but my understanding of the MCMC algo it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in this folder (`Portfolio/MCMC/`) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.
 
-The HMC algorithm is based on the exposition in [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapters 10, 11, and 12. The MCMC functions live in [my portfolio's github repo](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers). The samplers are in [`samplers/samplers.py`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/samplers.py). There are some MCMC diagnostics in [`samplers/utils.py`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/utils.py)
+The HMC algorithm is based on the exposition in [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapters 10, 11, and 12. The MCMC functions live in `samplers/samplers.py`. There are some MCMC diagnostics in `samplers/utils.py`
 
 The `hmc` function is a Hamiltonian Monte Carlo (HMC) sampler.  It requires 
-- `log_prob`: an unnormalised log probability for the distribution of interest, 
+- `log_prob`: an unnormed log probability for the distribution of interest, 
 - `data`: a dictionary of data and parameters to pass to that log_prob. This is evaluated as part of each iteration of the algorithm
 - `grad`: the gradient of the distribution with regard to the parameters and a starting point for the parameter samples. 
 - `n_iters`: the number of iterations for the algorithm
 - `starting`: a starting point for the samples
 - `eps`, `L`, `M`: Tuning parameters for the algorithms Hamiltonian dynamics. See [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapter 12.
 
-The algorithm generates a "momentum" variable at the start of each iteration. It uses this and the gradient to explore the target log density through a discrete approximation to hamiltonian dynamics in physics. At the end of an iteration, it computes a ratio $r$ of the target density at the starting values and the final location of the iteration. It accepts the new location as a sample with probability $\min(r,1)$ - this is the same as the Metropolis Hastings algorithm's acceptance step. This means that normalisation constants cancel and we can work with unnormalised log densities as our target function. 
+The algorithm generates a "momentum" variable at the start of each iteration. It uses this and the gradient to explore the target log density through a discrete approximation to hamiltonian dynamics in physics. At the end of an iteration, it computes a ratio $r$ of the target density at the starting values and the final location of the iteration. It accepts the new location as a sample with probability $\min(r,1)$ - this is the same as the Metropolis Hastings algorithm's acceptance step. Taking a ratio (actually a difference because we work with logs) means that normalisation constants cancel and we can work with unnormalised log densities as our target function. 
 
 At the end of the iterations, we have a "chain" of samples. A properly-tuned HMC run will converge to the target density, but that convergence takes time, so we drop a fixed number of starting iterations as a "warmup". Convergence to the target density can be measured by visual and diagnostic tests that I discuss later.
 
 ## Sampling From a Beta Distribution
 
-To see how it works, imagine we want to use it to draw samples from a Beta(x\|a = 3,b = 5) distribution. We would never use MCMC for this in practice, because simpler methods like the ratio of gamma variables exist for Beta sampling, but it is a nice example of how these algorithms work.
+To see how it works, imagine we want to use it to draw samples from a Beta(x\|a = 3,b = 5) distribution. We would never use MCMC for this in practice, because simpler methods like the ratio of gamma variables exist for Beta sampling, but it is a nice example of how the method works.
 
 The algorithm works best if its sample space is unbounded so the search doesn't reach areas of zero density. I use the logistic function to achieve this by mapping the real line to the support of the Beta distribution. The details of the derivation are in a footnote [^1] 
 
@@ -107,7 +107,7 @@ samples = hmc(
 )
 ```
 
-    accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:13<00:00, 221.83it/s]
+    accept rate: 1.0: 100%|████████████████████| 1999/1999 [00:09<00:00, 219.29it/s]
 
 
 This results in the following chain of samples. The top plot is the untransformed variable. The lower plot is the inverse logit transformed variable. We can see that it's mapped to $[0,1]$ and concentrating around the top part of the interval
@@ -141,9 +141,9 @@ print(
 )
 ```
 
-    sample mean 0.6260087623572026, true mean 0.625
+    sample mean 0.6197045404423477, true mean 0.625
     true .25, .5 and .75 quantiles [0.514 0.636 0.747]
-    sample .25, .5 and .75 quantiles [0.516 0.636 0.747]
+    sample .25, .5 and .75 quantiles [0.512 0.632 0.742]
 
 
 
@@ -165,74 +165,80 @@ fig.tight_layout();
     
 
 
-## Bayesian Linear Regression
+## Linear Regression
 
-In this section I run the algorithm to sample from a fairly straightforward Bayesian linear regression. The regression contains gaussian errors, an inverse gamma prior $\mathrm{inv\\_\Gamma}(1.5, 1)$ on the standard deviation of the errors and independent standard normal priors on the coefficients of the model.
+This is a model for a linear regression with gaussian errors, an inverse gamma prior $\mathrm{inv\_\Gamma}(1.5, 1)$ on the variance of the errors and independent normal priors on the coefficients of the model.
+
+Because we want to constrain $\sigma^2$ to be positive. We work with $\sigma^2 = \exp(k)$ so we can let the sampler run over the real line for this parameter[^2]. Working with $\exp(k)$ requires a reparametisation of the prior density for $\sigma^2$
+
+The prior on the variance is now
+
+$$p(\sigma^2) = p(\exp(k)) \\ \propto \exp(-k)^{2.5} \exp\left({-\exp(-k)}\right)\left\lvert\frac{d\sigma^2}{dk}\right\rvert \\ = \exp(-1.5k)\exp\left({-\exp(-k)}\right)
+$$
 
 Using $X_{i\cdot}$ as the $i^{th}$ row of X, the matrix of predictors, and $\mathbf{y}$ as the vector of outcome observations. The posterior density is
+$$p(\theta|\mathbf{y}) \propto \prod_{i=1}^{N}\left[\frac{1}{\exp(k/2)} \exp \left(\frac{-(y_i - X_{i\cdot}\beta)^2}{2\exp(k)}\right)\right]\exp(-1.5k)\exp\left({-\exp(-k)}\right) \exp\left(\frac{-\beta^T\beta}{2}\right)$$
 
-$$p(\theta|\mathbf{y}) \propto \prod_{i=1}^{N}\frac{1}{\sigma^2} \exp \left(\frac{-(y_i - X_{i\cdot}\beta)^2}{2\sigma^2}\right) \frac{1}{\sigma^5}\exp\left({\frac{-1}{\sigma^2}}\right)\exp\left(\frac{-\beta^T\beta}{2}\right)$$
+Ignoring the normalisation constant, the log posterior is 
 
-The gradient for the _log_ posterior for the coefficients is 
+$$ \frac{-Nk}{2} + \sum_{i=1}^{N}\frac{(y_i - X_{i\cdot}\beta)^2}{2exp(k)} - 1.5k -\exp(-k) - \frac{\beta^T\beta}{2}$$
 
-$$\sum_{i=1}^{N}\left[\frac{\left(y_i - X_{i\cdot}\beta\right)}{\sigma^2} X_{i\cdot}\right] - \beta^T$$
+The gradient for the coefficients is thus
 
-The partial derivative for sigma is 
+$$\sum_{i=1}^{N}\left[\frac{\left(y_i - X_{i\cdot}\beta\right)}{\exp(k)} X_{i\cdot}\right] - \beta^T$$
 
-$$ -5 - \frac{2(N-1)}{\sigma^2} + \sum_{i=1}^{N}\frac{y_i - X_{i\cdot}\beta}{\sigma^3} $$
+The partial derivative for $k$ is 
+
+$$ -N/2 + \exp(-k)\sum_{i=1}^{N}\frac{(y_i - X_{i\cdot}\beta)^2}{2} -1.5  + \exp(-k) $$
 
 
 ```python
 def log_prob(data, X, proposal):
     mu = X @ proposal[:-1]
-    sigma = proposal[-1]  # variance
+    k = proposal[-1]  # variance
+    var = np.exp(k)
 
-    log_lik = np.sum(-((data - mu) ** 2) / (2 * sigma**2)) - data.shape[0] * np.log(
-        sigma**2
-    )
+    log_lik = 1 / (2 * var) * np.sum(-((data - mu) ** 2)) - data.shape[0] * k / 2
 
     prior_coef = -np.dot(proposal.T, proposal) / 2
-    prior_sigma = -2.5 * np.log(sigma**2) - 1 / sigma**2
+    prior_sigma = -1.5 * k - 1 / var
 
     return log_lik + prior_coef + prior_sigma
 
 
 def grad(data, X, proposal):
     mu = X @ proposal[:-1, :]
-    sigma = proposal[-1, :]
+    k = proposal[-1, :]
+    var = np.exp(k)
     N = data.shape[0]
 
-    coef_grad = (
-        np.sum((data - mu) / (sigma**2) * X, axis=0).reshape(-1, 1) - proposal[:-1]
-    )
+    coef_grad = np.sum((data - mu) / var * X, axis=0).reshape(-1, 1) - proposal[:-1]
 
-    sigma_grad = [
-        -5.0 - 2 * (N - 1) / (sigma**2) + np.sum((data - mu) ** 2 / (sigma**3))
-    ]
+    sigma_grad = [-1.5 + 1 / var - N / 2 + 1 / (2 * var) * np.sum((data - mu) ** 2)]
     # print(sigma_grad)
     return np.r_[coef_grad, sigma_grad]
 
 
-def create_regression(N=1000, p=2, sigma=2):
+def create_regression(N=1000, p=2, var=2):
     coef = uniform(-2, 4).rvs(p)
 
     X = multivariate_normal(np.zeros(p), np.eye(p, p)).rvs(N)
 
-    y = X @ coef + norm(0, sigma).rvs(N)
+    y = X @ coef + norm(0, np.sqrt(var)).rvs(N)
     y = y.reshape(-1, 1)
     coef = coef.reshape(-1, 1)
-    return X, y, coef, sigma
+    return X, y, coef, var
 
 
-X, y, coef, sigma = create_regression(N=1000, p=p)
+X, y, coef, var = create_regression(N=1000, p=p, var=10.4)
 ```
 
 
 ```python
-print(f"coefficients = {coef.flatten()}, sigma = {sigma}")
+print(f"coefficients = {coef.flatten()}, variance = {var}")
 ```
 
-    coefficients = [-0.99171059 -1.51395354  0.1557642 ], sigma = 2
+    coefficients = [ 1.85542175 -1.5029411   0.39253026], variance = 10.4
 
 
 ### Sampling the posterior and checking convergence
@@ -260,10 +266,10 @@ for chain in range(chains.shape[0]):
     chains[chain, :, :] = params
 ```
 
-    accept rate: 0.998: 100%|██████████████████| 2999/2999 [00:25<00:00, 117.10it/s]
-    accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:25<00:00, 115.73it/s]
-    accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:25<00:00, 116.55it/s]
-    accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:25<00:00, 118.53it/s]
+    accept rate: 1.0: 100%|████████████████████| 1999/1999 [00:17<00:00, 114.15it/s]
+    accept rate: 1.0: 100%|████████████████████| 1999/1999 [00:17<00:00, 114.21it/s]
+    accept rate: 1.0: 100%|█████████████████████| 1999/1999 [00:20<00:00, 99.90it/s]
+    accept rate: 1.0: 100%|████████████████████| 1999/1999 [00:18<00:00, 108.76it/s]
 
 
 The $\hat{R}$ diagnostic value (the ratio of between and within chain variance) is less than 1.1 for all variables, and the chains appear to cover the same area in the plots, indicating that we have converged to the target distribution.
@@ -282,7 +288,7 @@ R_hat(chains, warmup).round(3)
 
 
 ```python
-plot_chains(chains, warmup, names=["coef1", "coef2", "coef3", "sigma"])
+plot_chains(chains, warmup, names=["coef1", "coef2", "coef3", "sigma"], alpha=0.3)
 ```
 
 
@@ -310,7 +316,6 @@ param_scatter(
 ![png](/assets/images/output_19_0.png)
     
 
-
 ## Computing things we care about
 Using these samples we can estimate the expection of whatever function of the samples that we like. First, we need to drop the warmup samples and eliminate the chain dimension from our chains variable. We did this above when creating `params`.
 
@@ -318,12 +323,14 @@ Firstly, we can see that the sample means are close to the true values.
 
 
 ```python
-print(f"Sample means for each parameter {samples.mean(axis=0)}")
-print(f"True values for each parameter {np.r_[coef.flatten(), [sigma]]}")
+print(
+    f"Sample means for each parameter {np.r_[samples[:,:-1].mean(axis=0), np.exp(samples[:,-1]).mean(axis=0)]}"
+)
+print(f"True values for each parameter {np.r_[coef.flatten(), var]}")
 ```
 
-    Sample means for each parameter [-0.96534396 -1.52982     0.05237238  1.75990307]
-    True values for each parameter [-0.99171059 -1.51395354  0.1557642   2.        ]
+    Sample means for each parameter [ 1.72353675 -1.54830328  0.39778799 10.75540068]
+    True values for each parameter [ 1.85542175 -1.5029411   0.39253026 10.4       ]
 
 
 We can also compute more interesting summaries. Firstly, the 90% quantiles of the marginal distributions. 
@@ -333,15 +340,20 @@ We can also compute more interesting summaries. Firstly, the 90% quantiles of th
 q = np.quantile(samples, (0.025, 0.975), axis=0).round(3)
 names = ["coef1", "coef2", "coef3", "sigma"]
 for i in range(p + 1):
-    print(
-        f"There is a 90% probability that {names[i]} has a value between {q[0, i]} and {q[1,i]}"
-    )
+    if i == 3:
+        print(
+            f"There is a 90% probability that {names[i]} has a value between {np.exp(q[0, i])} and {np.exp(q[1,i])}"
+        )
+    else:
+        print(
+            f"There is a 90% probability that {names[i]} has a value between {q[0, i]} and {q[1,i]}"
+        )
 ```
 
-    There is a 90% probability that coef1 has a value between -1.071 and -0.858
-    There is a 90% probability that coef2 has a value between -1.637 and -1.422
-    There is a 90% probability that coef3 has a value between -0.054 and 0.158
-    There is a 90% probability that sigma has a value between 1.664 and 1.865
+    There is a 90% probability that coef1 has a value between 1.512 and 1.939
+    There is a 90% probability that coef2 has a value between -1.749 and -1.347
+    There is a 90% probability that coef3 has a value between 0.198 and 0.597
+    There is a 90% probability that sigma has a value between 9.83551682472252 and 11.763482151980366
 
 
 If we want to know the probability that the second variable is more important than the other two variables for our outcome, then this is as simple as taking a mean over an indicator of the relationship we are interested in.
@@ -364,8 +376,8 @@ We can compute realisations from the distributions indexed by our samples for ea
 
 ```python
 posterior_mu = X @ samples[:, :-1].T
-posterior_sigma = samples[:, -1]
-post_preds = norm(posterior_mu, posterior_sigma).rvs((1000, samples.shape[0]))
+posterior_sd = np.exp(samples[:, -1] / 2)
+post_preds = norm(posterior_mu, posterior_sd).rvs((1000, samples.shape[0]))
 
 post_pred_errors = post_preds - y.reshape(-1, 1)
 
@@ -388,7 +400,7 @@ fig.tight_layout();
 
 
     
-![png](/assets/images/output_27_0.png)
+![png](/assets/images/output_28_0.png)
     
 
 
@@ -404,13 +416,12 @@ fig.tight_layout();
 
     The distribution's normalisation constant by definition doesn't depend on $x$ and we can ignore it for the purposes of the algorithm, so we use the unnormalised log density for the Beta distribution
 
-    $$ f(y, a, b) = (a-1) \dot \log\left[l(y)\right] + (b-1) \dot \log\left[1-l(y)\right] - y - 2\log\left[1+\exp(-y)\right]$$
-
-
-
+    $$ \log(f(y \mid a, b)) = (a-1) \dot \log\left[l(y)\right] + (b-1) \dot \log\left[1-l(y)\right] - y - 2\log\left[1+\exp(-y)\right]$$
 
     so $l(x) \in [0,1]$.
 
     We need the derivative for this function in order to use HMC. It is 
 
     $$\frac{\partial f(y|a,b)}{\partial y} = \left(\frac{a-1}{l(y)} - \frac{b-1}{1-l(y)}\right) l(y)^2 \exp(-y) - 1 + 2l(y)\exp(-y)$$
+
+[^2]: An alternative transform is to work with $\sigma$ and let the squaring take care of the positivity. However, the log likelihood contains a log step that is undefined for negative sigma proposals. Specifically $\log\left[\frac{1}{\sigma^N}\right] = -N\log(\sigma)$

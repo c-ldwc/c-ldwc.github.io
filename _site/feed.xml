@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.10.0">Jekyll</generator><link href="c-ldwc.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="c-ldwc.github.io/" rel="alternate" type="text/html" /><updated>2024-11-17T15:43:22+11:00</updated><id>c-ldwc.github.io/feed.xml</id><title type="html">C Ludowici Portfolio</title><subtitle></subtitle><author><name>C Ludowici, PhD</name></author><entry><title type="html">Hamiltonian Monte Carlo</title><link href="c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro/" rel="alternate" type="text/html" title="Hamiltonian Monte Carlo" /><published>2024-11-16T21:46:32+11:00</published><updated>2024-11-16T21:46:32+11:00</updated><id>c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro</id><content type="html" xml:base="c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro/"><![CDATA[<script type="text/x-mathjax-config">
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.10.0">Jekyll</generator><link href="https://c-ldwc.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://c-ldwc.github.io/" rel="alternate" type="text/html" /><updated>2024-11-18T16:44:50+11:00</updated><id>https://c-ldwc.github.io/feed.xml</id><title type="html">Charles Ludowici Portfolio</title><subtitle></subtitle><author><name>C Ludowici, PhD</name></author><entry><title type="html">Hamiltonian Monte Carlo</title><link href="https://c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro/" rel="alternate" type="text/html" title="Hamiltonian Monte Carlo" /><published>2024-11-16T21:46:32+11:00</published><updated>2024-11-16T21:46:32+11:00</updated><id>https://c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro</id><content type="html" xml:base="https://c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro/"><![CDATA[<script type="text/x-mathjax-config">
     MathJax.Hub.Config({
     extensions: ["tex2jax.js"],
     jax: ["input/TeX", "output/HTML-CSS"],
@@ -28,7 +28,7 @@
 
 <span class="kn">from</span> <span class="nn">samplers</span> <span class="kn">import</span> <span class="n">hmc</span><span class="p">,</span> <span class="n">metro_hastings</span><span class="p">,</span> <span class="n">R_hat</span><span class="p">,</span> <span class="n">plot_chains</span><span class="p">,</span> <span class="n">param_scatter</span>
 
-<span class="n">n_iters</span> <span class="o">=</span> <span class="mi">3000</span>
+<span class="n">n_iters</span> <span class="o">=</span> <span class="mi">2000</span>
 <span class="n">warmup</span> <span class="o">=</span> <span class="mi">1000</span>
 <span class="n">p</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="n">n_param</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span>
@@ -38,11 +38,11 @@
 
 <p>I use PyMC fairly regularly, but my understanding of the MCMC algo it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in this folder (<code class="language-plaintext highlighter-rouge">Portfolio/MCMC/</code>) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.</p>
 
-<p>The HMC algorithm is based on the exposition in <a href="https://stat.columbia.edu/~gelman/book/">Gelman et al.</a> chapters 10, 11, and 12. The MCMC functions live in <a href="https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers">my portfolio’s github repo</a>. The samplers are in <a href="https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/samplers.py"><code class="language-plaintext highlighter-rouge">samplers/samplers.py</code></a>. There are some MCMC diagnostics in <a href="https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/utils.py"><code class="language-plaintext highlighter-rouge">samplers/utils.py</code></a></p>
+<p>The HMC algorithm is based on the exposition in <a href="https://stat.columbia.edu/~gelman/book/">Gelman et al.</a> chapters 10, 11, and 12. The MCMC functions live in <code class="language-plaintext highlighter-rouge">samplers/samplers.py</code>. There are some MCMC diagnostics in <code class="language-plaintext highlighter-rouge">samplers/utils.py</code></p>
 
 <p>The <code class="language-plaintext highlighter-rouge">hmc</code> function is a Hamiltonian Monte Carlo (HMC) sampler.  It requires</p>
 <ul>
-  <li><code class="language-plaintext highlighter-rouge">log_prob</code>: an unnormalised log probability for the distribution of interest,</li>
+  <li><code class="language-plaintext highlighter-rouge">log_prob</code>: an unnormed log probability for the distribution of interest,</li>
   <li><code class="language-plaintext highlighter-rouge">data</code>: a dictionary of data and parameters to pass to that log_prob. This is evaluated as part of each iteration of the algorithm</li>
   <li><code class="language-plaintext highlighter-rouge">grad</code>: the gradient of the distribution with regard to the parameters and a starting point for the parameter samples.</li>
   <li><code class="language-plaintext highlighter-rouge">n_iters</code>: the number of iterations for the algorithm</li>
@@ -50,13 +50,13 @@
   <li><code class="language-plaintext highlighter-rouge">eps</code>, <code class="language-plaintext highlighter-rouge">L</code>, <code class="language-plaintext highlighter-rouge">M</code>: Tuning parameters for the algorithms Hamiltonian dynamics. See <a href="https://stat.columbia.edu/~gelman/book/">Gelman et al.</a> chapter 12.</li>
 </ul>
 
-<p>The algorithm generates a “momentum” variable at the start of each iteration. It uses this and the gradient to explore the target log density through a discrete approximation to hamiltonian dynamics in physics. At the end of an iteration, it computes a ratio $r$ of the target density at the starting values and the final location of the iteration. It accepts the new location as a sample with probability $\min(r,1)$ - this is the same as the Metropolis Hastings algorithm’s acceptance step. This means that normalisation constants cancel and we can work with unnormalised log densities as our target function.</p>
+<p>The algorithm generates a “momentum” variable at the start of each iteration. It uses this and the gradient to explore the target log density through a discrete approximation to hamiltonian dynamics in physics. At the end of an iteration, it computes a ratio $r$ of the target density at the starting values and the final location of the iteration. It accepts the new location as a sample with probability $\min(r,1)$ - this is the same as the Metropolis Hastings algorithm’s acceptance step. Taking a ratio (actually a difference because we work with logs) means that normalisation constants cancel and we can work with unnormalised log densities as our target function.</p>
 
 <p>At the end of the iterations, we have a “chain” of samples. A properly-tuned HMC run will converge to the target density, but that convergence takes time, so we drop a fixed number of starting iterations as a “warmup”. Convergence to the target density can be measured by visual and diagnostic tests that I discuss later.</p>
 
 <h2 id="sampling-from-a-beta-distribution">Sampling From a Beta Distribution</h2>
 
-<p>To see how it works, imagine we want to use it to draw samples from a Beta(x|a = 3,b = 5) distribution. We would never use MCMC for this in practice, because simpler methods like the ratio of gamma variables exist for Beta sampling, but it is a nice example of how these algorithms work.</p>
+<p>To see how it works, imagine we want to use it to draw samples from a Beta(x|a = 3,b = 5) distribution. We would never use MCMC for this in practice, because simpler methods like the ratio of gamma variables exist for Beta sampling, but it is a nice example of how the method works.</p>
 
 <p>The algorithm works best if its sample space is unbounded so the search doesn’t reach areas of zero density. I use the logistic function to achieve this by mapping the real line to the support of the Beta distribution. The details of the derivation are in a footnote <sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup></p>
 
@@ -96,7 +96,7 @@
 <span class="p">)</span>
 </code></pre></div></div>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:13&lt;00:00, 221.83it/s]
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>accept rate: 1.0: 100%|████████████████████| 1999/1999 [00:09&lt;00:00, 219.29it/s]
 </code></pre></div></div>
 
 <p>This results in the following chain of samples. The top plot is the untransformed variable. The lower plot is the inverse logit transformed variable. We can see that it’s mapped to $[0,1]$ and concentrating around the top part of the interval</p>
@@ -122,9 +122,9 @@
 <span class="p">)</span>
 </code></pre></div></div>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sample mean 0.6260087623572026, true mean 0.625
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sample mean 0.6197045404423477, true mean 0.625
 true .25, .5 and .75 quantiles [0.514 0.636 0.747]
-sample .25, .5 and .75 quantiles [0.516 0.636 0.747]
+sample .25, .5 and .75 quantiles [0.512 0.632 0.742]
 </code></pre></div></div>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
@@ -140,70 +140,75 @@ sample .25, .5 and .75 quantiles [0.516 0.636 0.747]
 
 <p><img src="/assets/images/output_9_0.png" alt="png" /></p>
 
-<h2 id="bayesian-linear-regression">Bayesian Linear Regression</h2>
+<h2 id="linear-regression">Linear Regression</h2>
 
-<p>In this section I run the algorithm to sample from a fairly straightforward Bayesian linear regression. The regression contains gaussian errors, an inverse gamma prior $\mathrm{inv\_\Gamma}(1.5, 1)$ on the standard deviation of the errors and independent standard normal priors on the coefficients of the model.</p>
+<p>This is a model for a linear regression with gaussian errors, an inverse gamma prior $\mathrm{inv_\Gamma}(1.5, 1)$ on the variance of the errors and independent normal priors on the coefficients of the model.</p>
 
-<p>Using $X_{i\cdot}$ as the $i^{th}$ row of X, the matrix of predictors, and $\mathbf{y}$ as the vector of outcome observations. The posterior density is</p>
+<p>Because we want to constrain $\sigma^2$ to be positive. We work with $\sigma^2 = \exp(k)$ so we can let the sampler run over the real line for this parameter<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">2</a></sup>. Working with $\exp(k)$ requires a reparametisation of the prior density for $\sigma^2$</p>
 
-\[p(\theta|\mathbf{y}) \propto \prod_{i=1}^{N}\frac{1}{\sigma^2} \exp \left(\frac{-(y_i - X_{i\cdot}\beta)^2}{2\sigma^2}\right) \frac{1}{\sigma^5}\exp\left({\frac{-1}{\sigma^2}}\right)\exp\left(\frac{-\beta^T\beta}{2}\right)\]
+<p>The prior on the variance is now</p>
 
-<p>The gradient for the <em>log</em> posterior for the coefficients is</p>
+\[p(\sigma^2) = p(\exp(k)) \\ \propto \exp(-k)^{2.5} \exp\left({-\exp(-k)}\right)\left\lvert\frac{d\sigma^2}{dk}\right\rvert \\ = \exp(-1.5k)\exp\left({-\exp(-k)}\right)\]
 
-\[\sum_{i=1}^{N}\left[\frac{\left(y_i - X_{i\cdot}\beta\right)}{\sigma^2} X_{i\cdot}\right] - \beta^T\]
+<p>Using $X_{i\cdot}$ as the $i^{th}$ row of X, the matrix of predictors, and $\mathbf{y}$ as the vector of outcome observations. The posterior density is
+\(p(\theta|\mathbf{y}) \propto \prod_{i=1}^{N}\left[\frac{1}{\exp(k/2)} \exp \left(\frac{-(y_i - X_{i\cdot}\beta)^2}{2\exp(k)}\right)\right]\exp(-1.5k)\exp\left({-\exp(-k)}\right) \exp\left(\frac{-\beta^T\beta}{2}\right)\)</p>
 
-<p>The partial derivative for sigma is</p>
+<p>Ignoring the normalisation constant, the log posterior is</p>
 
-\[-5 - \frac{2(N-1)}{\sigma^2} + \sum_{i=1}^{N}\frac{y_i - X_{i\cdot}\beta}{\sigma^3}\]
+\[\frac{-Nk}{2} + \sum_{i=1}^{N}\frac{(y_i - X_{i\cdot}\beta)^2}{2exp(k)} - 1.5k -\exp(-k) - \frac{\beta^T\beta}{2}\]
+
+<p>The gradient for the coefficients is thus</p>
+
+\[\sum_{i=1}^{N}\left[\frac{\left(y_i - X_{i\cdot}\beta\right)}{\exp(k)} X_{i\cdot}\right] - \beta^T\]
+
+<p>The partial derivative for $k$ is</p>
+
+\[-N/2 + \exp(-k)\sum_{i=1}^{N}\frac{(y_i - X_{i\cdot}\beta)^2}{2} -1.5  + \exp(-k)\]
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">proposal</span><span class="p">):</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">proposal</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">proposal</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># variance
-</span>
-    <span class="n">log_lik</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">-</span> <span class="n">data</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span>
-        <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
-    <span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">proposal</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># variance
+</span>    <span class="n">var</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+    <span class="n">log_lik</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">var</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">-</span> <span class="n">data</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">k</span> <span class="o">/</span> <span class="mi">2</span>
 
     <span class="n">prior_coef</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">proposal</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">proposal</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-    <span class="n">prior_sigma</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.5</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">prior_sigma</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">var</span>
 
     <span class="k">return</span> <span class="n">log_lik</span> <span class="o">+</span> <span class="n">prior_coef</span> <span class="o">+</span> <span class="n">prior_sigma</span>
 
 
 <span class="k">def</span> <span class="nf">grad</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">proposal</span><span class="p">):</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">proposal</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">proposal</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">proposal</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
     <span class="n">N</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="n">coef_grad</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">).</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">proposal</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="p">)</span>
+    <span class="n">coef_grad</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="n">var</span> <span class="o">*</span> <span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">).</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">proposal</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
-    <span class="n">sigma_grad</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="o">-</span><span class="mf">5.0</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>
-    <span class="p">]</span>
+    <span class="n">sigma_grad</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.5</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">var</span> <span class="o">-</span> <span class="n">N</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">var</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)]</span>
     <span class="c1"># print(sigma_grad)
 </span>    <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">r_</span><span class="p">[</span><span class="n">coef_grad</span><span class="p">,</span> <span class="n">sigma_grad</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">create_regression</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">create_regression</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">var</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="n">coef</span> <span class="o">=</span> <span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">).</span><span class="n">rvs</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 
     <span class="n">X</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)).</span><span class="n">rvs</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 
-    <span class="n">y</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">coef</span> <span class="o">+</span> <span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">).</span><span class="n">rvs</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">coef</span> <span class="o">+</span> <span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span><span class="p">)).</span><span class="n">rvs</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">coef</span> <span class="o">=</span> <span class="n">coef</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">coef</span><span class="p">,</span> <span class="n">sigma</span>
+    <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">coef</span><span class="p">,</span> <span class="n">var</span>
 
 
-<span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">coef</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">create_regression</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">)</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">coef</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">create_regression</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">var</span><span class="o">=</span><span class="mf">10.4</span><span class="p">)</span>
 </code></pre></div></div>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"coefficients = </span><span class="si">{</span><span class="n">coef</span><span class="p">.</span><span class="n">flatten</span><span class="p">()</span><span class="si">}</span><span class="s">, sigma = </span><span class="si">{</span><span class="n">sigma</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"coefficients = </span><span class="si">{</span><span class="n">coef</span><span class="p">.</span><span class="n">flatten</span><span class="p">()</span><span class="si">}</span><span class="s">, variance = </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
 </code></pre></div></div>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>coefficients = [-0.99171059 -1.51395354  0.1557642 ], sigma = 2
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>coefficients = [ 1.85542175 -1.5029411   0.39253026], variance = 10.4
 </code></pre></div></div>
 
 <h3 id="sampling-the-posterior-and-checking-convergence">Sampling the posterior and checking convergence</h3>
@@ -229,10 +234,10 @@ sample .25, .5 and .75 quantiles [0.516 0.636 0.747]
     <span class="n">chains</span><span class="p">[</span><span class="n">chain</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">params</span>
 </code></pre></div></div>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>accept rate: 0.998: 100%|██████████████████| 2999/2999 [00:25&lt;00:00, 117.10it/s]
-accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:25&lt;00:00, 115.73it/s]
-accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:25&lt;00:00, 116.55it/s]
-accept rate: 1.0: 100%|████████████████████| 2999/2999 [00:25&lt;00:00, 118.53it/s]
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>accept rate: 1.0: 100%|████████████████████| 1999/1999 [00:17&lt;00:00, 114.15it/s]
+accept rate: 1.0: 100%|████████████████████| 1999/1999 [00:17&lt;00:00, 114.21it/s]
+accept rate: 1.0: 100%|█████████████████████| 1999/1999 [00:20&lt;00:00, 99.90it/s]
+accept rate: 1.0: 100%|████████████████████| 1999/1999 [00:18&lt;00:00, 108.76it/s]
 </code></pre></div></div>
 
 <p>The $\hat{R}$ diagnostic value (the ratio of between and within chain variance) is less than 1.1 for all variables, and the chains appear to cover the same area in the plots, indicating that we have converged to the target distribution.</p>
@@ -243,7 +248,7 @@ accept rate: 1.0: 100%|███████████████████
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array([1., 1., 1., 1.])
 </code></pre></div></div>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">plot_chains</span><span class="p">(</span><span class="n">chains</span><span class="p">,</span> <span class="n">warmup</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s">"coef1"</span><span class="p">,</span> <span class="s">"coef2"</span><span class="p">,</span> <span class="s">"coef3"</span><span class="p">,</span> <span class="s">"sigma"</span><span class="p">])</span>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">plot_chains</span><span class="p">(</span><span class="n">chains</span><span class="p">,</span> <span class="n">warmup</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s">"coef1"</span><span class="p">,</span> <span class="s">"coef2"</span><span class="p">,</span> <span class="s">"coef3"</span><span class="p">,</span> <span class="s">"sigma"</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
 </code></pre></div></div>
 
 <p><img src="/assets/images/output_17_0.png" alt="png" /></p>
@@ -267,12 +272,14 @@ accept rate: 1.0: 100%|███████████████████
 
 <p>Firstly, we can see that the sample means are close to the true values.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Sample means for each parameter </span><span class="si">{</span><span class="n">samples</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"True values for each parameter </span><span class="si">{</span><span class="n">np</span><span class="p">.</span><span class="n">r_</span><span class="p">[</span><span class="n">coef</span><span class="p">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="p">[</span><span class="n">sigma</span><span class="p">]]</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s">"Sample means for each parameter </span><span class="si">{</span><span class="n">np</span><span class="p">.</span><span class="n">r_</span><span class="p">[</span><span class="n">samples</span><span class="p">[</span><span class="si">:</span><span class="p">,</span><span class="si">:</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="si">:</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">]).</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span><span class="si">}</span><span class="s">"</span>
+<span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"True values for each parameter </span><span class="si">{</span><span class="n">np</span><span class="p">.</span><span class="n">r_</span><span class="p">[</span><span class="n">coef</span><span class="p">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">var</span><span class="p">]</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
 </code></pre></div></div>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Sample means for each parameter [-0.96534396 -1.52982     0.05237238  1.75990307]
-True values for each parameter [-0.99171059 -1.51395354  0.1557642   2.        ]
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Sample means for each parameter [ 1.72353675 -1.54830328  0.39778799 10.75540068]
+True values for each parameter [ 1.85542175 -1.5029411   0.39253026 10.4       ]
 </code></pre></div></div>
 
 <p>We can also compute more interesting summaries. Firstly, the 90% quantiles of the marginal distributions.</p>
@@ -280,15 +287,20 @@ True values for each parameter [-0.99171059 -1.51395354  0.1557642   2.        ]
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">).</span><span class="nb">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s">"coef1"</span><span class="p">,</span> <span class="s">"coef2"</span><span class="p">,</span> <span class="s">"coef3"</span><span class="p">,</span> <span class="s">"sigma"</span><span class="p">]</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s">"There is a 90% probability that </span><span class="si">{</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s"> has a value between </span><span class="si">{</span><span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s">"</span>
-    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s">"There is a 90% probability that </span><span class="si">{</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s"> has a value between </span><span class="si">{</span><span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">])</span><span class="si">}</span><span class="s">"</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s">"There is a 90% probability that </span><span class="si">{</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s"> has a value between </span><span class="si">{</span><span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s">"</span>
+        <span class="p">)</span>
 </code></pre></div></div>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>There is a 90% probability that coef1 has a value between -1.071 and -0.858
-There is a 90% probability that coef2 has a value between -1.637 and -1.422
-There is a 90% probability that coef3 has a value between -0.054 and 0.158
-There is a 90% probability that sigma has a value between 1.664 and 1.865
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>There is a 90% probability that coef1 has a value between 1.512 and 1.939
+There is a 90% probability that coef2 has a value between -1.749 and -1.347
+There is a 90% probability that coef3 has a value between 0.198 and 0.597
+There is a 90% probability that sigma has a value between 9.83551682472252 and 11.763482151980366
 </code></pre></div></div>
 
 <p>If we want to know the probability that the second variable is more important than the other two variables for our outcome, then this is as simple as taking a mean over an indicator of the relationship we are interested in.</p>
@@ -307,8 +319,8 @@ There is a 90% probability that sigma has a value between 1.664 and 1.865
 <p>We can compute realisations from the distributions indexed by our samples for each observation - the “posterior predictive distribution” - and compare our observations to the resulting distributions. This allows us to plot the histograms of the distributions and a tail p-value  for each observation . In the plots below I plot the difference between the predictions and the observation corresponding to them, so 0 is the true value. Very low or very high p-values are cause for concern, but this is a moot point here because the model corresponds perfectly to the data generating process.</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">posterior_mu</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">samples</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="n">T</span>
-<span class="n">posterior_sigma</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">post_preds</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">posterior_mu</span><span class="p">,</span> <span class="n">posterior_sigma</span><span class="p">).</span><span class="n">rvs</span><span class="p">((</span><span class="mi">1000</span><span class="p">,</span> <span class="n">samples</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">posterior_sd</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">post_preds</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">posterior_mu</span><span class="p">,</span> <span class="n">posterior_sd</span><span class="p">).</span><span class="n">rvs</span><span class="p">((</span><span class="mi">1000</span><span class="p">,</span> <span class="n">samples</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
 
 <span class="n">post_pred_errors</span> <span class="o">=</span> <span class="n">post_preds</span> <span class="o">-</span> <span class="n">y</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -329,7 +341,7 @@ There is a 90% probability that sigma has a value between 1.664 and 1.865
 <span class="n">fig</span><span class="p">.</span><span class="n">tight_layout</span><span class="p">();</span>
 </code></pre></div></div>
 
-<p><img src="/assets/images/output_27_0.png" alt="png" /></p>
+<p><img src="/assets/images/output_28_0.png" alt="png" /></p>
 
 <h3 id="footnotes">Footnotes</h3>
 
@@ -346,7 +358,7 @@ There is a 90% probability that sigma has a value between 1.664 and 1.865
 
       <p>The distribution’s normalisation constant by definition doesn’t depend on $x$ and we can ignore it for the purposes of the algorithm, so we use the unnormalised log density for the Beta distribution</p>
 
-\[f(y, a, b) = (a-1) \dot \log\left[l(y)\right] + (b-1) \dot \log\left[1-l(y)\right] - y - 2\log\left[1+\exp(-y)\right]\]
+\[\log(f(y \mid a, b)) = (a-1) \dot \log\left[l(y)\right] + (b-1) \dot \log\left[1-l(y)\right] - y - 2\log\left[1+\exp(-y)\right]\]
 
       <p>so $l(x) \in [0,1]$.</p>
 
@@ -354,6 +366,9 @@ There is a 90% probability that sigma has a value between 1.664 and 1.865
 
 \[\frac{\partial f(y|a,b)}{\partial y} = \left(\frac{a-1}{l(y)} - \frac{b-1}{1-l(y)}\right) l(y)^2 \exp(-y) - 1 + 2l(y)\exp(-y)\]
       <p><a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>An alternative transform is to work with $\sigma$ and let the squaring take care of the positivity. However, the log likelihood contains a log step that is undefined for negative sigma proposals. Specifically $\log\left[\frac{1}{\sigma^N}\right] = -N\log(\sigma)$ <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
   </ol>
 </div>]]></content><author><name>C Ludowici, PhD</name></author><category term="MCMC" /><summary type="html"><![CDATA[Hamiltonian Monte Carlo From Scratch in Python]]></summary></entry></feed>
