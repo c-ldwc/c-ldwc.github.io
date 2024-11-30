@@ -95,7 +95,7 @@ stat_summaries = bandit_summaries(sims, arm_mu)
 # Stationary Rewards
 ## Mean reward for each action over time 
 
-Here we see how the mean rewards for each action over each iteration of the bandit algos evolve. Each blue line is a run of the bandit simulator. The x axis is the $t^{th}$ performance of the relevant action each run. At x = 1000 in the top left plot we see the mean reward for the first action for all Thompson sampling runs that chose that action 1000 or more times. 
+Here we see how the mean rewards for each action over each iteration of the bandit algos evolve. Each blue line is a run of the bandit simulator. The x axis is the $t^{th}$ performance of the relevant action each run. At x = 1000 in the top left plot we see the mean reward for the first action over $t\leq1000$ for all Thompson sampling runs that chose that action 1000 or more times. 
 
 We can see that Thompson sampling tends to learn about the poorer action (k = 0) early on and rarely runs it more than about 400 times. The UCB algorithm however takes much longer for its intervals to converge to a point where this action is obviously not a winner. 
 
