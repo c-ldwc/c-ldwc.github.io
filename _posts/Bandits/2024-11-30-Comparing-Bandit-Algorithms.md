@@ -29,7 +29,7 @@ In making a choice of action (i.e. what content to post to a page, what drug to 
 
 In this notebook I compare simulations from two popular bandit algorithms - Thompson sampling, which is based on the Bayesian update to a binomial mean from a beta prior, and the Upper Confidence Bound algorithm, which uses Hoeffding's inequality to bound the mean. This post is designed to highlight my fluency with Python and these algorithms - rather than providing a serious scientific comparison of the two methods. 
 
-My bandit algorithms, reward and some utility functions are packaged in the `bandits` module imported above. The software lives in my [github portfolio](https://github.com/c-ldwc/Portfolio/tree/main/Bandits/bandits). The algorithms are found in the [bandit algorithm classes file](https://github.com/c-ldwc/Portfolio/blob/main/Bandits/bandits/banditClasses.py). 
+My bandit algorithms, reward and some utility functions are packaged in the `bandits` module imported below. The software lives in my [github portfolio](https://github.com/c-ldwc/Portfolio/tree/main/Bandits/bandits). The algorithms are found in the [bandit algorithm classes file](https://github.com/c-ldwc/Portfolio/blob/main/Bandits/bandits/banditClasses.py). 
 
 I simulated bandits with a time horizon $T$ of 10,000. Each bandit was simulated 500 times. Giving me 1,000 observations at each T for both UCB and Thompson sampling. The bandits sampled from 2 arms, both returned Bernoulli rewards with p = 0.2 and p = 0.3. We want to know how our algorithm performs, on average, relative to the best performance. This is known as regret and is defined as 
 $$R = \Sigma_{i=1}^{T}\left[\mu(a^*) - \mu(a_t)\right]$$ 
@@ -112,7 +112,7 @@ mean_plots(stat_summaries["running_means"]);
 
 
     
-![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_7_1.png)
+![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_7_1.png){: .align-center}
     
 
 
@@ -129,7 +129,7 @@ regret_plots(stat_summaries["regret_trajectories"], T);
 
 
     
-![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_9_1.png)
+![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_9_1.png){: .align-center}
     
 
 
@@ -148,7 +148,7 @@ bound_plots(sims);
 
 
     
-![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_11_1.png)
+![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_11_1.png){: .align-center}
     
 
 
@@ -201,7 +201,7 @@ mean_plots(ns_summaries["running_means"]);
 
 
     
-![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_14_1.png)
+![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_14_1.png){: .align-center}
     
 
 
@@ -215,7 +215,7 @@ regret_plots(ns_summaries["regret_trajectories"], T);
 
 
     
-![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_15_1.png)
+![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_15_1.png){: .align-center}
     
 
 
@@ -230,6 +230,6 @@ bound_plots(ns_sim);
 
 
     
-![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_16_1.png)
+![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_16_1.png){: .align-center}
     
 

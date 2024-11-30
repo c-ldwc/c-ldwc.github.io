@@ -124,7 +124,7 @@ fig.tight_layout();
 
 
     
-![png](/assets/images/output_6_0.png)
+![png](/assets/images/output_6_0.png){: .align-center}
     
 
 
@@ -161,7 +161,7 @@ fig.tight_layout();
 
 
     
-![png](/assets/images/output_9_0.png)
+![png](/assets/images/output_9_0.png){: .align-center}
     
 
 
@@ -293,7 +293,7 @@ plot_chains(chains, warmup, names=["coef1", "coef2", "coef3", "sigma"], alpha=0.
 
 
     
-![png](/assets/images/output_17_0.png)
+![png](/assets/images/output_17_0.png){: .align-center}
     
 
 
@@ -313,7 +313,7 @@ param_scatter(
 
 
     
-![png](/assets/images/output_19_0.png)
+![png](/assets/images/output_19_0.png){: .align-center}
     
 
 ## Computing things we care about
@@ -400,7 +400,7 @@ fig.tight_layout();
 
 
     
-![png](/assets/images/output_28_0.png)
+![png](/assets/images/output_28_0.png){: .align-center}
     
 
 
