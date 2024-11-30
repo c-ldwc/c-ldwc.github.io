@@ -4,4 +4,10 @@ var store = [{
         "tags": [],
         "url": "/mcmc/Hamiltonian-MC-Intro/",
         "teaser": null
+      },{
+        "title": "Comparing Bandit Algorithms",
+        "excerpt":"$\\renewcommand{\\hat}[1]{\\widehat{#1}}$ Multi Armed Bandit Simulations Multi-armed bandit algorithms optimise a target metric by learning which choice of $K$ actions (a.k.a. “arms”) to take. The value of the metric after taking an action is considered a reward for that action. In making a choice of action there is a tradeoff between...","categories": ["Bandits"],
+        "tags": [],
+        "url": "/bandits/Comparing-Bandit-Algorithms/",
+        "teaser": null
       }]

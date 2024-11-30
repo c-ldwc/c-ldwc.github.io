@@ -1,4 +1,185 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.10.0">Jekyll</generator><link href="https://c-ldwc.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://c-ldwc.github.io/" rel="alternate" type="text/html" /><updated>2024-11-18T16:44:50+11:00</updated><id>https://c-ldwc.github.io/feed.xml</id><title type="html">Charles Ludowici Portfolio</title><subtitle></subtitle><author><name>C Ludowici, PhD</name></author><entry><title type="html">Hamiltonian Monte Carlo</title><link href="https://c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro/" rel="alternate" type="text/html" title="Hamiltonian Monte Carlo" /><published>2024-11-16T21:46:32+11:00</published><updated>2024-11-16T21:46:32+11:00</updated><id>https://c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro</id><content type="html" xml:base="https://c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro/"><![CDATA[<script type="text/x-mathjax-config">
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.10.0">Jekyll</generator><link href="https://c-ldwc.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://c-ldwc.github.io/" rel="alternate" type="text/html" /><updated>2024-11-30T18:58:44+11:00</updated><id>https://c-ldwc.github.io/feed.xml</id><title type="html">Charles Ludowici Portfolio</title><subtitle></subtitle><author><name>C Ludowici, PhD</name></author><entry><title type="html">Comparing Bandit Algorithms</title><link href="https://c-ldwc.github.io/bandits/Comparing-Bandit-Algorithms/" rel="alternate" type="text/html" title="Comparing Bandit Algorithms" /><published>2024-11-29T21:46:32+11:00</published><updated>2024-11-29T21:46:32+11:00</updated><id>https://c-ldwc.github.io/bandits/Comparing-Bandit-Algorithms</id><content type="html" xml:base="https://c-ldwc.github.io/bandits/Comparing-Bandit-Algorithms/"><![CDATA[<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+  </script>
+
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+<p>$\renewcommand{\hat}[1]{\widehat{#1}}$</p>
+<h1 id="multi-armed-bandit-simulations">Multi Armed Bandit Simulations</h1>
+
+<p>Multi-armed bandit algorithms optimise a target metric by learning which choice of $K$ actions (a.k.a. “arms”) to take. The value of the metric after taking an action is considered a reward for that action.  In making a choice of action there is a tradeoff between exploring each action in order to better understand its expected reward, or exploiting the action that has led to the best rewards in the past. Bandit algorithms are applied in marketing, finance, conversion rate optimisation and clinical trials.</p>
+
+<p>In this notebook I compare sims from two popular bandit algorithms - Thompson sampling, which is based on the Bayesian update to a binomial mean from a beta prior, and the Upper Confidence Bound algorithm, which uses Hoeffding’s inequality to bound the mean. This post is designed to highlight my fluency with Python and these algorithms - rather than providing a serious scientific comparison of the two methods.</p>
+
+<p>My bandit algorithms, reward and some utility functions are packaged in the <code class="language-plaintext highlighter-rouge">bandits</code> module imported above. The software lives in my <a href="https://github.com/c-ldwc/Portfolio/tree/main/Bandits/bandits">github portfolio</a>. The algorithms are found in the <a href="https://github.com/c-ldwc/Portfolio/blob/main/Bandits/bandits/banditClasses.py">bandit algorithm classes file</a>.</p>
+
+<p>I simulated bandits with a time horizon $T$ of 10,000. Each bandit was simulated 500 times. Giving me 1,000 observations at each T for both UCB and Thompson sampling. The bandits sampled from 2 arms, both returned Bernoulli rewards with p = 0.2 and p = 0.3. We want to know how our algorithm performs, on average, relative to the best performance. This is known as regret and is defined as 
+\(R = \Sigma_{i=1}^{T}\left[\mu(a^*) - \mu(a_t)\right]\)</p>
+
+<p>where $\mu(a^*)$ is the mean for the best action and $\mu(a_t)$ is the mean for the action chosen at time $t$. For our rewards it is</p>
+
+\[R = T*.3 - \Sigma_{i=1}^{T}\mu(a_t)\]
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">bandits</span> <span class="c1">#bandit algos and rewards
+</span><span class="kn">from</span> <span class="nn">simulation_help</span> <span class="kn">import</span> <span class="p">(</span> <span class="c1">#plotting and simulation functions
+</span>    <span class="n">bandit_summaries</span><span class="p">,</span>
+    <span class="n">simulate</span><span class="p">,</span>
+    <span class="n">TS_single_sim</span><span class="p">,</span>
+    <span class="n">ucb_single_sim</span><span class="p">,</span>
+    <span class="n">mean_plots</span><span class="p">,</span>
+    <span class="n">regret_plots</span><span class="p">,</span>
+    <span class="n">bound_plots</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">arm_mu</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]</span>  <span class="c1"># True means for the binomial reward
+</span><span class="n">T</span> <span class="o">=</span> <span class="mi">10_000</span>  <span class="c1"># Time horizon for each bandit
+</span><span class="n">n_sims</span> <span class="o">=</span> <span class="mi">500</span>  <span class="c1"># Number of bandits to simulate
+</span></code></pre></div></div>
+
+<h2 id="simulations">Simulations</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># stationary simulations
+</span><span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">exists</span><span class="p">(</span><span class="s">"simulations.csv"</span><span class="p">):</span>
+    <span class="n">rg</span> <span class="o">=</span> <span class="n">bandits</span><span class="p">.</span><span class="n">binom_reward_generator</span><span class="p">(</span><span class="n">arm_mu</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">TS_data</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span>
+        <span class="n">N</span><span class="o">=</span><span class="n">n_sims</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">arm_mu</span><span class="o">=</span><span class="n">arm_mu</span><span class="p">,</span> <span class="n">single_sim</span><span class="o">=</span><span class="n">TS_single_sim</span><span class="p">,</span> <span class="n">reward_fn</span><span class="o">=</span><span class="n">rg</span><span class="p">.</span><span class="n">reward</span>
+    <span class="p">)</span>
+    <span class="n">ucb_data</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span>
+        <span class="n">N</span><span class="o">=</span><span class="n">n_sims</span><span class="p">,</span>
+        <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span>
+        <span class="n">n_out</span><span class="o">=</span><span class="n">T</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">arm_mu</span><span class="p">),</span>
+        <span class="n">arm_mu</span><span class="o">=</span><span class="n">arm_mu</span><span class="p">,</span>
+        <span class="n">single_sim</span><span class="o">=</span><span class="n">ucb_single_sim</span><span class="p">,</span>
+        <span class="n">reward_fn</span><span class="o">=</span><span class="n">rg</span><span class="p">.</span><span class="n">reward</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">TS_data</span><span class="p">[</span><span class="s">"source"</span><span class="p">]</span> <span class="o">=</span> <span class="s">"Thompson Sampling"</span>
+    <span class="n">ucb_data</span><span class="p">[</span><span class="s">"source"</span><span class="p">]</span> <span class="o">=</span> <span class="s">"UCB"</span>
+    <span class="n">sims</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">concat</span><span class="p">([</span><span class="n">TS_data</span><span class="p">,</span> <span class="n">ucb_data</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">sims</span><span class="p">[</span><span class="s">"act"</span><span class="p">]</span> <span class="o">=</span> <span class="n">sims</span><span class="p">[</span><span class="s">"act"</span><span class="p">].</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">sims</span><span class="p">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s">"simulations.csv"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">sims</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s">"simulations.csv"</span><span class="p">)</span>
+
+<span class="n">stat_summaries</span> <span class="o">=</span> <span class="n">bandit_summaries</span><span class="p">(</span><span class="n">sims</span><span class="p">,</span> <span class="n">arm_mu</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h1 id="stationary-rewards">Stationary Rewards</h1>
+<h2 id="mean-reward-for-each-action-over-time">Mean reward for each action over time</h2>
+
+<p>Here we see how the mean rewards for each action over each iteration of the bandit algos evolve. Each blue line is a run of the bandit simulator. The x axis is the $t^{th}$ performance of the relevant action each run. At x = 1000 in the top left plot we see the mean reward for the first action for all Thompson sampling runs that chose that action 1000 or more times.</p>
+
+<p>We can see that Thompson sampling tends to learn about the poorer action (k = 0) early on and rarely runs it more than about 400 times. The UCB algorithm however takes much longer for its intervals to converge to a point where this action is obviously not a winner.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mean_plots</span><span class="p">(</span><span class="n">stat_summaries</span><span class="p">[</span><span class="s">"running_means"</span><span class="p">]);</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>100%|██████████| 500/500 [00:03&lt;00:00, 137.38it/s]
+100%|██████████| 500/500 [00:35&lt;00:00, 14.22it/s]
+100%|██████████| 500/500 [00:07&lt;00:00, 71.21it/s]
+100%|██████████| 500/500 [00:32&lt;00:00, 15.22it/s]
+</code></pre></div></div>
+
+<p><img src="/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_7_1.png" alt="png" /></p>
+
+<h2 id="regret">Regret</h2>
+<p>The plots below show the cumulative regret at each point during a simulation run. Each line represents a bandit simulation. Thompson sampling appears initially linear (i.e. described by a power law because these are log-log plots) and levels off around t = 1000. UCB does not show this patter and attains a higher regret than almost all Thompson Sampling simulations.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">regret_plots</span><span class="p">(</span><span class="n">stat_summaries</span><span class="p">[</span><span class="s">"regret_trajectories"</span><span class="p">],</span> <span class="n">T</span><span class="p">);</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>100%|██████████| 499/499 [00:00&lt;00:00, 535.24it/s]
+</code></pre></div></div>
+
+<p><img src="/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_9_1.png" alt="png" /></p>
+
+<h2 id="parameter-bounds">Parameter Bounds</h2>
+
+<p>Finally, we can view the bounds on the estimates of the mean for each algorithm. For Thompson sampling these are the 95% quantiles of the posterior distribution. For the UCB algorithm they are the confidence intervals derived from the Hoeffding Inequality (these can be $\lt 0$).  We can see that UCB’s bounds are wider than Thompson sampling, but this is slightly arbitrary because it depends on my choice of quantile for the Thompson posterior.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">bound_plots</span><span class="p">(</span><span class="n">sims</span><span class="p">);</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>100%|██████████| 499/499 [00:02&lt;00:00, 217.35it/s]
+100%|██████████| 499/499 [00:02&lt;00:00, 224.76it/s]
+</code></pre></div></div>
+
+<p><img src="/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_11_1.png" alt="png" /></p>
+
+<h1 id="non-stationary-rewards">Non-Stationary Rewards</h1>
+
+<p>In addition to the above stationary rewards, we want to see what happens when the mean is changing over time. For e-commerce, this is pretty common. Conversion is more likely at certain times of the week (i.e. weekends), or year (i.e. sales events). To simulate this I have a reward generator that increases the Bernoulli parameter by .1 every 6th and 7th day - corresponding to a weekend bump in conversions. Note that this preserves the ranking of the actions.</p>
+
+<p>I do this because these two algorithms are predicated on stationary reward distributions, but such distributions are very rare for almost all metrics we care about. Checking that the algorithms’ decisions are robust to deviations from their ideal cases is vital if we want to deploy these to automate decision making.</p>
+
+<p>The plots below show very little in terms of interesting changes due to the non-stationarity - probably because the weekend bump preserves the order of the two arms’ means.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># non-stationary simulations
+</span><span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">exists</span><span class="p">(</span><span class="s">"non_stat_simulations.csv"</span><span class="p">):</span>
+    <span class="n">rg</span> <span class="o">=</span> <span class="n">bandits</span><span class="p">.</span><span class="n">binom_weekend_reward</span><span class="p">(</span><span class="n">arm_mu</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">TS_data</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span>
+        <span class="n">N</span><span class="o">=</span><span class="n">n_sims</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">arm_mu</span><span class="o">=</span><span class="n">arm_mu</span><span class="p">,</span> <span class="n">single_sim</span><span class="o">=</span><span class="n">TS_single_sim</span><span class="p">,</span> <span class="n">reward_fn</span><span class="o">=</span><span class="n">rg</span><span class="p">.</span><span class="n">reward</span>
+    <span class="p">)</span>
+    <span class="n">ucb_data</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span>
+        <span class="n">N</span><span class="o">=</span><span class="n">n_sims</span><span class="p">,</span>
+        <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span>
+        <span class="n">n_out</span><span class="o">=</span><span class="n">T</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">arm_mu</span><span class="p">),</span>
+        <span class="n">arm_mu</span><span class="o">=</span><span class="n">arm_mu</span><span class="p">,</span>
+        <span class="n">single_sim</span><span class="o">=</span><span class="n">ucb_single_sim</span><span class="p">,</span>
+        <span class="n">reward_fn</span><span class="o">=</span><span class="n">rg</span><span class="p">.</span><span class="n">reward</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">TS_data</span><span class="p">[</span><span class="s">"source"</span><span class="p">]</span> <span class="o">=</span> <span class="s">"Thompson Sampling"</span>
+    <span class="n">ucb_data</span><span class="p">[</span><span class="s">"source"</span><span class="p">]</span> <span class="o">=</span> <span class="s">"UCB"</span>
+    <span class="n">ns_sim</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">concat</span><span class="p">([</span><span class="n">TS_data</span><span class="p">,</span> <span class="n">ucb_data</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ns_sim</span><span class="p">[</span><span class="s">"act"</span><span class="p">]</span> <span class="o">=</span> <span class="n">ns_sim</span><span class="p">[</span><span class="s">"act"</span><span class="p">].</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">ns_sim</span><span class="p">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s">"non_stat_simulations.csv"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">ns_sim</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s">"non_stat_simulations.csv"</span><span class="p">)</span>
+
+<span class="n">ns_summaries</span> <span class="o">=</span> <span class="n">bandit_summaries</span><span class="p">(</span><span class="n">ns_sim</span><span class="p">,</span> <span class="n">arm_mu</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mean_plots</span><span class="p">(</span><span class="n">ns_summaries</span><span class="p">[</span><span class="s">"running_means"</span><span class="p">]);</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>100%|██████████| 500/500 [00:03&lt;00:00, 139.73it/s]
+100%|██████████| 500/500 [00:35&lt;00:00, 13.89it/s]
+100%|██████████| 500/500 [00:07&lt;00:00, 71.36it/s]
+100%|██████████| 500/500 [00:33&lt;00:00, 15.09it/s]
+</code></pre></div></div>
+
+<p><img src="/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_14_1.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">regret_plots</span><span class="p">(</span><span class="n">ns_summaries</span><span class="p">[</span><span class="s">"regret_trajectories"</span><span class="p">],</span> <span class="n">T</span><span class="p">);</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>100%|██████████| 499/499 [00:00&lt;00:00, 581.05it/s]
+</code></pre></div></div>
+
+<p><img src="/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_15_1.png" alt="png" /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">bound_plots</span><span class="p">(</span><span class="n">ns_sim</span><span class="p">);</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>100%|██████████| 499/499 [00:02&lt;00:00, 215.17it/s]
+100%|██████████| 499/499 [00:02&lt;00:00, 223.29it/s]
+</code></pre></div></div>
+
+<p><img src="/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_16_1.png" alt="png" /></p>]]></content><author><name>C Ludowici, PhD</name></author><category term="Bandits" /><summary type="html"><![CDATA[Implementing, Simulating and Comparing the Thompson Sampling and Upper Confidence Bound algorithms]]></summary></entry><entry><title type="html">Hamiltonian Monte Carlo</title><link href="https://c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro/" rel="alternate" type="text/html" title="Hamiltonian Monte Carlo" /><published>2024-11-16T21:46:32+11:00</published><updated>2024-11-16T21:46:32+11:00</updated><id>https://c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro</id><content type="html" xml:base="https://c-ldwc.github.io/mcmc/Hamiltonian-MC-Intro/"><![CDATA[<script type="text/x-mathjax-config">
     MathJax.Hub.Config({
     extensions: ["tex2jax.js"],
     jax: ["input/TeX", "output/HTML-CSS"],
@@ -36,9 +217,9 @@
 
 <p>Markov Chain Monte Carlo (MCMC) algorithms draw samples from target probability distributions. The resulting samples can be used to approximate integrals (i.e. expectations) over the distribution being targeted. They are the workhorse of Bayesian computation, where posteriors are often too complex to solve without algorithmic tools, and are responsible for computation in the popular Bayesian software packages Stan and PyMC.</p>
 
-<p>I use PyMC fairly regularly, but my understanding of the MCMC algo it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in this folder (<code class="language-plaintext highlighter-rouge">Portfolio/MCMC/</code>) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.</p>
+<p>I use PyMC fairly regularly, but my understanding of the MCMC algo it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in this folder (<a href="https://github.com/c-ldwc/Portfolio/tree/main/MCMC"><code class="language-plaintext highlighter-rouge">Portfolio/MCMC/</code></a>) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.</p>
 
-<p>The HMC algorithm is based on the exposition in <a href="https://stat.columbia.edu/~gelman/book/">Gelman et al.</a> chapters 10, 11, and 12. The MCMC functions live in <code class="language-plaintext highlighter-rouge">samplers/samplers.py</code>. There are some MCMC diagnostics in <code class="language-plaintext highlighter-rouge">samplers/utils.py</code></p>
+<p>The HMC algorithm is based on the exposition in <a href="https://stat.columbia.edu/~gelman/book/">Gelman et al.</a> chapters 10, 11, and 12. The MCMC functions live in <a href="https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/samplers.py"><code class="language-plaintext highlighter-rouge">samplers/samplers.py</code></a>. There are some MCMC diagnostics in <a href="https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/utils.py"><code class="language-plaintext highlighter-rouge">samplers/utils.py</code></a></p>
 
 <p>The <code class="language-plaintext highlighter-rouge">hmc</code> function is a Hamiltonian Monte Carlo (HMC) sampler.  It requires</p>
 <ul>
@@ -155,11 +336,11 @@ sample .25, .5 and .75 quantiles [0.512 0.632 0.742]
 
 <p>Ignoring the normalisation constant, the log posterior is</p>
 
-\[\frac{-Nk}{2} + \sum_{i=1}^{N}\frac{(y_i - X_{i\cdot}\beta)^2}{2exp(k)} - 1.5k -\exp(-k) - \frac{\beta^T\beta}{2}\]
+\[\frac{-Nk}{2} - \sum_{i=1}^{N}\frac{(y_i - X_{i\cdot}\beta)^2}{2exp(k)} - 1.5k -\exp(-k) - \frac{\beta^T\beta}{2}\]
 
 <p>The gradient for the coefficients is thus</p>
 
-\[\sum_{i=1}^{N}\left[\frac{\left(y_i - X_{i\cdot}\beta\right)}{\exp(k)} X_{i\cdot}\right] - \beta^T\]
+\[\sum_{i=1}^{N}\left[\frac{\left(y_i - X_{i\cdot}\beta\right)}{\exp(k)} X_{i\cdot}^T\right] - \beta\]
 
 <p>The partial derivative for $k$ is</p>
 
