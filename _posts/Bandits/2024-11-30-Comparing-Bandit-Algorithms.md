@@ -6,6 +6,7 @@ categories: Bandits
 layout: single
 classes: wide
 toc: true
+toc_label: "Table of Contents"
 excerpt: "Implementing, Simulating and Comparing the Thompson Sampling and Upper Confidence Bound algorithms"
 use_math: true
 ---

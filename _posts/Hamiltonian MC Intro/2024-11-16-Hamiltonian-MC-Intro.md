@@ -7,6 +7,9 @@ layout: single
 classes: wide
 excerpt: "Hamiltonian Monte Carlo From Scratch in Python"
 use_math: true
+toc: true
+toc_label: "Table of Contents"
+
 ---
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
