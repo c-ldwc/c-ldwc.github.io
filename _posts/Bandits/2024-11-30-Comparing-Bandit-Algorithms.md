@@ -25,9 +25,9 @@ use_math: true
 $\renewcommand{\hat}[1]{\widehat{#1}}$
 # Multi Armed Bandit Simulations
 
-Multi-armed bandit algorithms optimise a target metric by learning which choice of $K$ actions (a.k.a. "arms") to take. The value of the metric after taking an action is considered a reward for that action.  In making a choice of action there is a tradeoff between exploring each action in order to better understand its expected reward, or exploiting the action that has led to the best rewards in the past. Bandit algorithms are applied in marketing, finance, conversion rate optimisation and clinical trials. 
+In making a choice of action (i.e. what content to post to a page, what drug to give a patient, what weight to give an asset in a portfolio) there is a tradeoff between exploring our choices in order to better understand  their outcomes, or exploiting the action that has led to the best outcomes in the past. Multi-armed bandit algorithms choose actions and attempt to balance exploitation and exploration in order to maximise a target metric. They are commonly are applied in marketing, finance, conversion rate optimisation and clinical trials. 
 
-In this notebook I compare sims from two popular bandit algorithms - Thompson sampling, which is based on the Bayesian update to a binomial mean from a beta prior, and the Upper Confidence Bound algorithm, which uses Hoeffding's inequality to bound the mean. This post is designed to highlight my fluency with Python and these algorithms - rather than providing a serious scientific comparison of the two methods. 
+In this notebook I compare simulations from two popular bandit algorithms - Thompson sampling, which is based on the Bayesian update to a binomial mean from a beta prior, and the Upper Confidence Bound algorithm, which uses Hoeffding's inequality to bound the mean. This post is designed to highlight my fluency with Python and these algorithms - rather than providing a serious scientific comparison of the two methods. 
 
 My bandit algorithms, reward and some utility functions are packaged in the `bandits` module imported above. The software lives in my [github portfolio](https://github.com/c-ldwc/Portfolio/tree/main/Bandits/bandits). The algorithms are found in the [bandit algorithm classes file](https://github.com/c-ldwc/Portfolio/blob/main/Bandits/bandits/banditClasses.py). 
 
@@ -117,7 +117,7 @@ mean_plots(stat_summaries["running_means"]);
 
 
 ## Regret
-The plots below show the cumulative regret at each point during a simulation run. Each line represents a bandit simulation. Thompson sampling appears initially linear (i.e. described by a power law because these are log-log plots) and levels off around t = 1000. UCB does not show this patter and attains a higher regret than almost all Thompson Sampling simulations. 
+The plots below show the cumulative regret at each point during a simulation run. Each line represents a bandit simulation. Thompson sampling appears initially linear (i.e. described by a power law because these are log-log plots) and levels off around t = 1000. UCB does not show this pattern and attains a higher regret than almost all Thompson Sampling simulations. 
 
 
 ```python
@@ -156,7 +156,7 @@ bound_plots(sims);
 
 In addition to the above stationary rewards, we want to see what happens when the mean is changing over time. For e-commerce, this is pretty common. Conversion is more likely at certain times of the week (i.e. weekends), or year (i.e. sales events). To simulate this I have a reward generator that increases the Bernoulli parameter by .1 every 6th and 7th day - corresponding to a weekend bump in conversions. Note that this preserves the ranking of the actions. 
 
-I do this because these two algorithms are predicated on stationary reward distributions, but such distributions are very rare for almost all metrics we care about. Checking that the algorithms' decisions are robust to deviations from their ideal cases is vital if we want to deploy these to automate decision making.
+I do this because these two algorithms are predicated on stationary reward distributions, but such distributions are very rare for almost all real-world metrics we care about. Checking that the algorithms' decisions are robust to deviations from their ideal cases is vital if we want to deploy these to automate decision making.
 
 The plots below show very little in terms of interesting changes due to the non-stationarity - probably because the weekend bump preserves the order of the two arms' means. 
 
