@@ -46,6 +46,7 @@ warmup = 1000
 p = 3
 n_param = p + 1
 ```
+# Hamiltonian Monte Carlo
 
 Markov Chain Monte Carlo (MCMC) algorithms draw samples from target probability distributions. The resulting samples can be used to approximate integrals (i.e. expectations) over the distribution being targeted. They are the workhorse of Bayesian computation, where posteriors are often too complex to solve without algorithmic tools, and are responsible for computation in the popular Bayesian software packages Stan and PyMC. 
 
