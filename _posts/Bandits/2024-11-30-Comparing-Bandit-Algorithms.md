@@ -26,7 +26,7 @@ use_math: true
 $\renewcommand{\hat}[1]{\widehat{#1}}$
 # Multi Armed Bandit Simulations
 
-In making a choice of action (i.e. what content to post to a page, what drug to give a patient, what weight to give an asset in a portfolio) there is a tradeoff between exploring our choices in order to better understand  their outcomes, or exploiting the action that has led to the best outcomes in the past. Multi-armed bandit algorithms choose actions and attempt to balance exploitation and exploration in order to maximise a target metric. They are commonly are applied in marketing, finance, conversion rate optimisation and clinical trials. 
+In making a choice of action (i.e. what content to post to a page, what drug to give a patient, what weight to give an asset in a portfolio) there is a tradeoff between exploring our choices in order to better understand  their outcomes, or exploiting the action that has led to the best outcomes in the past. Multi-armed bandit algorithms choose actions and attempt to balance exploitation and exploration in order to maximise a target metric. They are commonly applied in marketing, finance, conversion rate optimisation and clinical trials. 
 
 In this notebook I compare simulations from two popular bandit algorithms - Thompson sampling, which is based on the Bayesian update to a binomial mean from a beta prior, and the Upper Confidence Bound algorithm, which uses Hoeffding's inequality to bound the mean. This post is designed to highlight my fluency with Python and these algorithms - rather than providing a serious scientific comparison of the two methods. 
 
