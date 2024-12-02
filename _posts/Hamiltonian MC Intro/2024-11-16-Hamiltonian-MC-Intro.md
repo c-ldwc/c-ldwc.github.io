@@ -50,7 +50,7 @@ n_param = p + 1
 
 Markov Chain Monte Carlo (MCMC) algorithms draw samples from target probability distributions. The resulting samples can be used to approximate integrals (i.e. expectations) over the distribution being targeted. They are the workhorse of Bayesian computation, where posteriors are often too complex to solve without algorithmic tools, and are responsible for computation in the popular Bayesian software packages Stan and PyMC. 
 
-I use PyMC fairly regularly, but my understanding of the MCMC algo it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in this folder ([`Portfolio/MCMC/`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC)) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.
+I use PyMC fairly regularly, but my understanding of the MCMC algo it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in the Github folder ([`MCMC/`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC)) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.
 
 The HMC algorithm is based on the exposition in [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapters 10, 11, and 12. The MCMC functions live in [`samplers/samplers.py`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/samplers.py). There are some MCMC diagnostics in [`samplers/utils.py`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/utils.py)
 

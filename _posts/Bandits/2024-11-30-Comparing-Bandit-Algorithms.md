@@ -28,9 +28,11 @@ $\renewcommand{\hat}[1]{\widehat{#1}}$
 
 In making a choice of action (i.e. what content to post to a page, what drug to give a patient, what weight to give an asset in a portfolio) there is a tradeoff between exploring our choices in order to better understand  their outcomes, or exploiting the action that has led to the best outcomes in the past. Multi-armed bandit algorithms choose actions and attempt to balance exploitation and exploration in order to maximise a target metric. They are commonly applied in marketing, finance, conversion rate optimisation and clinical trials. 
 
-In this notebook I compare simulations from two popular bandit algorithms - Thompson sampling, which is based on the Bayesian update to a binomial mean from a beta prior, and the Upper Confidence Bound algorithm, which uses Hoeffding's inequality to bound the mean. This post is designed to highlight my fluency with Python and these algorithms - rather than providing a serious scientific comparison of the two methods. 
+In this notebook I compare simulations from two popular bandit algorithms - Thompson sampling, which is based on the Bayesian update to a binomial mean from a beta prior, and the Upper Confidence Bound algorithm, which uses Hoeffding's inequality to bound the mean. 
 
-My bandit algorithms, reward and some utility functions are packaged in the `bandits` module imported below. The software lives in my [github portfolio](https://github.com/c-ldwc/Portfolio/tree/main/Bandits/bandits). The algorithms are found in the [bandit algorithm classes file](https://github.com/c-ldwc/Portfolio/blob/main/Bandits/bandits/banditClasses.py). 
+The algorithms are based on Alex Slivkins' excellent lecture notes [Advanced Topics in Theory of Computing: Bandits, Experts, and Games](https://www.cs.umd.edu/~slivkins/CMSC858G-fall16/)
+
+My bandit algorithms, reward and some utility functions are packaged in the `bandits` module imported below. The software lives in my [Github](https://github.com/c-ldwc/Portfolio/tree/main/Bandits/bandits). The algorithms are found in the [bandit algorithm classes file](https://github.com/c-ldwc/Portfolio/blob/main/Bandits/bandits/banditClasses.py). 
 
 I simulated bandits with a time horizon $T$ of 10,000. Each bandit was simulated 500 times. Giving me 1,000 observations at each T for both UCB and Thompson sampling. The bandits sampled from 2 arms, both returned Bernoulli rewards with p = 0.2 and p = 0.3. We want to know how our algorithm performs, on average, relative to the best performance. This is known as regret and is defined as 
 $$R = \Sigma_{i=1}^{T}\left[\mu(a^*) - \mu(a_t)\right]$$ 
