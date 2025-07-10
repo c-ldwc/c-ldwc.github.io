@@ -318,12 +318,15 @@ Log-lik:   -135247.8934
 ```
 
 ## Performance and Extensions
-Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 data points with Criterion gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the fact that the benchmarking included the data simulation and the crate lacks any serious performance optimisations (other than avoiding matmuls with large diagonal matrices).
+Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 variables with [Criterion](https://bheisler.github.io/criterion.rs/book/criterion_rs.html) gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the fact that the benchmarking included the data simulation and the crate lacks any serious performance optimisations (other than avoiding matmuls with large diagonal matrices).
 
 In the future, we could speed this up with
 
 - Sparse matrix support for large datasets  
 - Parallel computation of gradients
+
+The library could also benefit from
+
 - More sophisticated line search methods
 - Hessian approximation for non-positive-definite Hessians.
 - Additional family distributions (Gamma, negative binomial, Cox, Tweedie)
