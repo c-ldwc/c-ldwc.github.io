@@ -5,7 +5,7 @@ date:   2025-07-05
 categories: Statistics Rust
 layout: single
 classes: wide
-excerpt: "Building a GLM library from scratch in Rust with nalgebra"
+excerpt: "Building a GLM library in Rust"
 use_math: true
 toc: true
 toc_label: "Table of Contents"
@@ -318,7 +318,7 @@ Log-lik:   -135247.8934
 ```
 
 ## Performance and Extensions
-Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 data points with Criterion gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the fact that the benchmarking including the data simulation and the crate lacks any serious performance optimisations (other than avoiding large diagonal matrices).
+Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 data points with Criterion gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the fact that the benchmarking included the data simulation and the crate lacks any serious performance optimisations (other than avoiding matmuls with large diagonal matrices).
 
 In the future, we could speed this up with
 
