@@ -89,7 +89,7 @@ $$W = \textrm{diag}(w_i)$$
 where 
 
 $$w_i = \frac{\alpha(\mu_i)}{g'(\mu_i)^2 V(\mu_i)}$$
- 
+
 are the IRLS weights
 
 The Hessian (Fisher information) is:
@@ -318,7 +318,7 @@ Log-lik:   -135247.8934
 ```
 
 ## Performance and Extensions
-Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 data points with Criterion gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite including the data simulation functios and without any serious performance optimisations (other than avoiding large diagonal matrices).
+Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 data points with Criterion gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the facts that the benchmarking including the data simulation and and the crate lacks any serious performance optimisations (other than avoiding large diagonal matrices).
 
 In the future, we could speed this up with
 
