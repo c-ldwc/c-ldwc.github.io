@@ -202,9 +202,9 @@ impl Family for Binomial {
 }
 ```
 
-## Newton-Raphson Optimization
+## Newton-Raphson Optimisation
 
-The optimizer uses Newton's method with analytic gradients and Hessians:
+The optimiser uses Newton's method with analytic gradients and Hessians:
 
 ```rust
 pub fn optim(&mut self) -> Result<(bool), Box<dyn Error>> {
@@ -318,7 +318,7 @@ Log-lik:   -135247.8934
 ```
 
 ## Performance and Extensions
-Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 data points with Criterion gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the facts that the benchmarking including the data simulation and and the crate lacks any serious performance optimisations (other than avoiding large diagonal matrices).
+Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 data points with Criterion gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the fact that the benchmarking including the data simulation and the crate lacks any serious performance optimisations (other than avoiding large diagonal matrices).
 
 In the future, we could speed this up with
 
