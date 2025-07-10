@@ -76,9 +76,14 @@ $$\frac{\partial \ell}{\partial \beta} = X^T W G (y - \mu)$$
 
 Where $\mu = g^{-1}(X\beta)$ and the matrices are defined as:
 
-- $\alpha(\mu_i) = 1 + (y_i - \mu_i)\left\{\frac{V'(\mu_i)}{V(\mu_i)} + \frac{g''(\mu_i)}{g'(\mu_i)}\right\}$ where $g$ is the link function
-- $G = \text{diag}\left\{\frac{g'(\mu_i)}{\alpha(\mu_i)}\right\}$ contains scaled link derivatives
-- $W = \text{diag}(w_i)$ where $w_i = \frac{\alpha(\mu_i)}{g'(\mu_i)^2 V(\mu_i)}$ are the IRLS weights
+$$\alpha(\mu_i) = 1 + (y_i - \mu_i)\left\{\frac{V'(\mu_i)}{V(\mu_i)} + \frac{g''(\mu_i)}{g'(\mu_i)}\right\}$$ 
+where $g$ is the link function
+$$G = \textrm{diag}\left\{\frac{g'(\mu_i)}{\alpha(\mu_i)}\right\}$$ 
+contains scaled link derivatives, and 
+$$W = \textrm{diag}(w_i)$$
+where 
+$$w_i = \frac{\alpha(\mu_i)}{g'(\mu_i)^2 V(\mu_i)}$$ 
+are the IRLS weights
 
 The Hessian (Fisher information) is:
 
