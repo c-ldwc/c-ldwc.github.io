@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Deep Latent Variable Models and Variational Inference"
-date: 2025-07-15
+date: 2025-07-25
 categories: [machine-learning, variational-inference]
 tags: [deep-learning, latent-variables, variational-inference, neural-networks]
 math: true
@@ -35,6 +35,35 @@ $\newcommand{\Real}{ \mathbb{R}}$
 $\renewcommand{\argmax}{ \operatorname*{argmax}}$
 $\renewcommand{\argmin}{ \operatorname*{argmin}}$
 
+<details>
+  <summary>
+    <strong>Mathematical Notation</strong>
+    <br>
+    <em>Click to expand notation reference</em>
+  </summary>
+
+**Probability Distributions:**
+- $\posterior$ - Posterior distribution of latent variables given observed data
+- $\prior$ - Prior distribution of latent variables
+- $\likelihood$ - Likelihood of observed data given latent variables
+- $\marglike$ - Marginal likelihood (evidence)
+- $\fulllike$ - Joint distribution of observed and latent variables
+- $\variational$ - Variational approximation to the posterior
+
+**Key Terms:**
+- $\ELBO$ - Evidence Lower BOund
+- $\KL{q}{p}$ - Kullback-Leibler divergence from q to p
+
+**Variables:**
+- $x$ - Observed data
+- $z$ - Latent variables
+- $\theta$ - Generative model parameters
+- $\phi$ - Variational parameters
+- $w$ - Global latent variable (GMVAE)
+- $l$ - Local/cluster-specific latent variable (GMVAE)
+
+</details>
+
 I'm a sucker for deep learning with a probabilistic interpretation because I'm always asking myself two questions when I fit models
   
  <ol type="a">
@@ -42,10 +71,10 @@ I'm a sucker for deep learning with a probabilistic interpretation because I'm a
   <li>Why shouldn't everything be Bayesian?</li>
 </ol>
 
-In this post I describe a class of deep learning models that conduct [variational Bayesian inference](https://en.wikipedia.org/wiki/Variational_Bayesian_methods), build a clustering model, and show how the architecture can yield meaningful clusterings.
+In this post I describe a class of deep learning models that conduct [variational Bayesian inference](https://en.wikipedia.org/wiki/Variational_Bayesian_methods), use them to build a clustering model, and show how the architecture can yield meaningful clusterings.
 
 ## Latent Variable Models
-A latent variable model assumes that observed data $\mathrm{x} \in \Real^T$ has a likelihood that depends on a variable $z$, and some generative model parameters $\theta$, $p(\mathrm{x} \mid z ; \theta)$. $z$ itself has prior $p(z)$. We can make these models "deep" by implementing the probability $p(x_t \mid x; \theta)$ using a neural network. For instance, we may assume $z \sim \Normal{\mu}{I}$ for $z \in \Real^k$ and $p(x_t\mid z; \theta, W) = \mathrm{softmax}(Wh_t)$ where $h_t$ is the output of a recursive neural network and $W$ is learnable. Latent models allow us to: 
+A latent variable model assumes that observed data $\mathrm{x} \in \Real^T$ has a likelihood that depends on a variable $z$, and some generative model parameters $\theta$, $p(\mathrm{x} \mid z ; \theta)$. $z$ itself has prior $p(z)$. We can make these models "deep" by implementing the probability $p(x_t \mid z; \theta)$ using a neural network. For instance, we may assume $z \sim \Normal{\mu}{I}$ for $z \in \Real^k, k << T$ and $p(x_t\mid z; \theta, W) = \mathrm{softmax}(Wh_t)$ where $h_t$ is the output of a recursive neural network and $W$ is learnable. Latent models allow us to: 
 - Cluster documents by clustering using the latent representations
 - Generate new values of x by sampling $z$. This, to me, feels like sampling the posterior predictive distribution. Although it is not strictly the same thing because we are not sampling from $\posterior$. Text generation is largely the domain of transformers at the moment, but we can apply this to other autoregressive time series (i.e. financial data) or stationary distributions. 
     - The resulting values of x can be used for anomaly detection, causal inference etc. 
@@ -78,7 +107,7 @@ For a large dataset, having as many variational parameters as data points become
 
 $$\ELBO = \expectation{\variational}{\ln\likelihood} - \KL{\variational}{\prior}$$
 
-Now our objective can be maximised by maximising the expectation of the log-likelihood over the variational distribution and minimising the KL distance between the prior and the variational distribution. The expectation is estimated by sampling from $\variational$ and taking the mean of $\likelihood$. If we pick our variational family and our prior to be Gaussian and $\Normal{0}{1}$, respectively. The KL divergence can be calculated analytically. 
+Now our objective can be maximised by maximising the expectation of the log-likelihood over the variational distribution and minimising the (always non-negative) KL distance between the prior and the variational distribution. The expectation is estimated by sampling from $\variational$ and taking the mean of $\likelihood$. If we pick our variational family and our prior to be Gaussian and $\Normal{0}{1}$, respectively, the KL divergence can be calculated analytically. 
 
 ## Variational Autoencoders
 
@@ -88,23 +117,25 @@ These models have very exiting possibilities, you can generate data points by sa
 
 ## Gaussian Mixture Variational Autoencoders
 
-Here, I replicate the model architecture for the paper [Deep Unsupervised Clustering with Gaussian Mixture Variational Autoencoders](https://arxiv.org/abs/1611.02648). This paper interested me because clustering via mixture models can be very useful, but sampling a cluster assignment in a neural net results in a discontinuity that breaks differentiation. I'll briefly describe the model components here
+Here, I replicate the model architecture for the paper [Deep Unsupervised Clustering with Gaussian Mixture Variational Autoencoders](https://arxiv.org/abs/1611.02648) (henceforth the GMVAE paper). This paper interested me because clustering via mixture models can be very useful, but sampling a cluster assignment in a neural net results in a discontinuity that breaks differentiation. I'll briefly describe the model components here (using slightly different notation than the paper)
 $$
 \begin{align}
 w &\sim \mathcal{N}(0, I) \tag{1a} \\
 z &\sim \text{Mult}(\pi) \tag{1b} \\
 l|z, w &\sim \prod_{k=1}^{K} \mathcal{N}\left(\mu_{z_k}(w; \beta), \text{diag}\left(\sigma^2_{z_k}(w; \beta)\right)\right)^{z_k} \tag{1c} \\
-x|l &\sim \mathcal{N}\left(\mu(l; \theta), \text{diag}\left(\sigma^2(x; \theta)\right)\right) \text{ or } \mathcal{B}\left(\mu(l; \theta)\right) \tag{1d}
+x|l &\sim \mathcal{N}\left(\mu(l; \theta), \text{diag}\left(\sigma^2(l; \theta)\right)\right) \text{ or } \mathcal{B}\left(\mu(l; \theta)\right) \tag{1d}
 \end{align}
 $$
 
-In english, there are three latent variables:
+In English, there are three latent variables:
 
 - $z$, a one-hot encoded vector where the nonzero element is the cluster assignment, with prior $\text{Mult}(\pi)$
 - $w$, which determines the means and variances of the various clusters via the networks $\mu_{z_k}(w; \beta)$ and $\sigma^2_{z_k}(w; \beta)$. $w$ has prior $\mathcal{N}(0, I)$
 - $l$, which determines the likelihood via the networks $\mu(l; \theta)$ and $\sigma^2(x; \theta)$
 
-Interestingly, they calculate a posterior for z and reconstruct the ELBO in such a way that the model need not sample the discrete variable z in the forward pass, retaining differentiability. Note that sampling a normal distribution for the likelihood and variational distributions is differentiable because we can generate $\mu$ and $\sigma$, then sample $n$ from $\Normal{0}{1}$ and do the old fashioned $y = \mu + n\sigma$, which is $\Normal{\mu}{\sigma^2}$. What the GMVAE paper amounts to is an autoencoder, plus a network for the conditional prior of $l$, and a slightly more complicated loss function than the standard ELBO decomposition. The details are in the paper.
+Interestingly, they calculate a posterior for z and reconstruct the ELBO in such a way that the model need not sample the discrete variable z in the forward pass, retaining differentiability. Note that sampling a normal distribution for the likelihood and variational distributions is differentiable because we can generate $\mu$ and $\sigma$, then sample $n$ from $\Normal{0}{1}$ and do the old fashioned $x = \mu + n\sigma$, which is $\Normal{\mu}{\sigma^2}$. This maintains differentiability because the sampled x is a differentiable function of the network outputs $\mu$ and $\sigma$.
+
+What the GMVAE paper amounts to is a variational autoencoder consisting of an encoder for $w$ and $l$, a network for the conditional prior of $l$, a decoder network that maps $l \to x$, and a slightly more complicated loss function than the standard ELBO decomposition. The details are in the paper.
 
 A pytorch implementation of the model is below
 
@@ -112,21 +143,41 @@ A pytorch implementation of the model is below
   <summary>
     <strong>GMVAE Class Implementation</strong>
     <br>
-    <em>Click to expand full implementation</em>
+    <em>Click to view</em>
   </summary>
 
 ```python
+import torch
+from torch import nn
+import torch.nn.functional as F
+from torch.distributions import Normal, Categorical
+from collections import OrderedDict
+from typing import Tuple, Callable, Optional, List
+def layer_from_list(dims:list[int], name:str, norm = True, negative = True, act:Callable=nn.Tanh) -> nn.Module:
+    """
+    Create a sequential list of layers
+    """
+    layers = OrderedDict()
+    for i in range(1,len(dims)):
+        layers[f'{name}_{i}'] = nn.Linear(dims[i-1], dims[i])
+        if not (negative and i == len(dims)-1): #Skip last decoder activation to get negative reconstructions
+            layers[f"{name}_activ_{i}"] = act()
+        if norm and i < len(dims)-1:
+            layers[f"{name}_norm_{i}"] = nn.LayerNorm(dims[i])
+    return nn.Sequential(layers)
+
+
 class GMVAE(nn.Module):
     def __init__(
         self,
         input_dim: int,
         w_dim: int,
         l_dim: int,
-        enc_dim: list[int],
-        dec_dim: list[int],
+        enc_dim: List[int],
+        dec_dim: List[int],
         k: int = 2,
-        xav:bool = False
-    ):
+        xav: bool = False
+    ) -> None:
         """
         Gaussian Mixture Variational Autoencoder (GMVAE) implementation.
         
@@ -151,12 +202,15 @@ class GMVAE(nn.Module):
             - Encoder: maps x -> (w_mu, w_sigma, l_mu, l_sigma)
             - Decoder: maps l -> (x_mu, x_sigma) 
             - Prior network: maps w -> cluster-specific parameters for p(l|w,z)
-      
-        note that instead of x for the latent dim as they do in the original paper, I use x for the input and l for the latent dimension
+        """
+        
+        """
+        GMVAE
+
+        note that instead of x for the latent dim, I use x for the input and l for the latent dimension
         """
         super().__init__()
         self.input_dim = input_dim
-        self.dropout = dropout
         self.k = k
         self.w_dim = w_dim
         self.l_dim = l_dim
@@ -190,7 +244,7 @@ class GMVAE(nn.Module):
         l = mu + ln_sigma.exp() * eps
         return l
 
-    def cluster_params(self, params, z):
+    def cluster_params(self, params: torch.Tensor, z: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Get the appropriate cluster parameters given the cluster assignments z
         """
@@ -204,7 +258,7 @@ class GMVAE(nn.Module):
 
         return mu, ln_sigma
     
-    def sample(self, N:int = 1000, z: list[int]|None = None, w:list[float]|None = None):
+    def sample(self, N: int = 1000, z: Optional[List[int]] = None, w: Optional[List[float]] = None) -> torch.Tensor:
         device = next(self.parameters()).device
         if w is None:
             w = torch.distributions.MultivariateNormal(torch.zeros((self.w_dim)), torch.eye(self.w_dim)).sample((N,)).to(device)
@@ -222,7 +276,7 @@ class GMVAE(nn.Module):
         return y
 
 
-    def forward(self, x: torch.FloatTensor, cluster_params=True) -> Tuple[torch.Tensor]:
+    def forward(self, x: torch.FloatTensor, cluster_params: bool = True) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor], torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         device = x.device
         h = self.encoder(x)
         w_params, l_params = torch.split(h, [self.w_dim * 2, self.l_dim * 2], dim=-1)
@@ -240,7 +294,7 @@ class GMVAE(nn.Module):
 
         return recon_mu, recon_ln_sigma, cp, w_mu, w_ln_sigma, l_mu, l_ln_sigma, l
 
-    def conditional_prior(self, w_mu, w_ln_sigma, l_mu, l_ln_sigma, L:int = 5):
+    def conditional_prior(self, w_mu: torch.Tensor, w_ln_sigma: torch.Tensor, l_mu: torch.Tensor, l_ln_sigma: torch.Tensor, L: int = 5) -> torch.Tensor:
         result = 0
         for _ in range(L):
             w_j = self.reparameterise(w_mu, w_ln_sigma)
@@ -261,7 +315,7 @@ class GMVAE(nn.Module):
     def cluster_posterior(
         self,
         cp_params: torch.FloatTensor,
-        latent,
+        latent: torch.Tensor,
     ) -> torch.FloatTensor:
         # split into k chunks
         clusters = torch.chunk(cp_params, self.k, -1)
@@ -290,16 +344,16 @@ class GMVAE(nn.Module):
 
     def loss(
         self,
-        x,
-        w_mu, 
-        w_ln_sigma,
-        l_mu,
-        l_ln_sigma,
-        cp,
-        l,
+        x: torch.Tensor,
+        w_mu: torch.Tensor, 
+        w_ln_sigma: torch.Tensor,
+        l_mu: torch.Tensor,
+        l_ln_sigma: torch.Tensor,
+        cp: torch.Tensor,
+        l: torch.Tensor,
         L: int = 30,
         lbd: float = 0
-    ):
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         z_posterior = self.cluster_posterior(cp, l)
 
         # q(l|x) samples
@@ -324,5 +378,14 @@ class GMVAE(nn.Module):
 
         z_loss = torch.clamp(z_kl.mean(), min=lbd)
         return -1 * recon_loss + conditional_loss + w_loss + z_loss, recon_loss, conditional_loss, w_loss, z_loss, z_kl.mean()
+
 ```
 </details>
+
+## Reproducing The Spiral Data Experiment
+
+The GMVAE paper describes a clustering experiment where the data consists of points in 2D space sampled from the arcs of 5 circles. Their data is on github, so to test my implementation above I attempted to replicate their architecture (given in their appendix A) and the results of their experiment. I used the same Adam setup as they did and clamped the z-prior term at 1.5 (their figure 3b). Training with my implementation is slightly brittle. Sometimes the the z prior term goes to zero even with clamping and the resulting clusters are heavily overlapping. The authors interpret this as due as an over-regularlisation thanks to the prior term. I think my implementation is not 100% correct. 
+
+Still, when this doesn't occur, the resulting clusters are meaningful. The top plot below shows KDE contours generated by setting the cluster to a particular value, sampling from the latent space associated with that cluster and decoding those samples. The points in the bottom plot have colours that correspond to $\underset{z}\argmax\ p(z\mid l,w,y)$, the most probable cluster for each data point according to the z-posterior.
+
+![png](/assets/images/GMVAE/all_cluster_densities.png){: .align-center .width = "70%" .height=auto}
