@@ -151,7 +151,7 @@ A pytorch implementation of the model is below
     <em>Click to view</em>
   </summary>
 
-    ```python
+```python
 
     import torch
     from torch import nn
@@ -385,7 +385,7 @@ A pytorch implementation of the model is below
             z_loss = torch.clamp(z_kl.mean(), min=lbd)
             return -1 * recon_loss + conditional_loss + w_loss + z_loss, recon_loss, conditional_loss, w_loss, z_loss, z_kl.mean()
 
-    ```
+```
 </details>
 
 ## Reproducing The Spiral Data Experiment
