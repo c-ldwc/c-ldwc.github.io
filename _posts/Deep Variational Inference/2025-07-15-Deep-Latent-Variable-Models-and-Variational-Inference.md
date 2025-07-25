@@ -144,7 +144,7 @@ What the GMVAE paper amounts to is a variational autoencoder consisting of an en
 
 A pytorch implementation of the model is below
 
-<details>
+<details markdown="1">
   <summary>
     <strong>GMVAE Class Implementation</strong>
     <br>
