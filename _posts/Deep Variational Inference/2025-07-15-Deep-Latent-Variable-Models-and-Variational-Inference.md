@@ -4,7 +4,11 @@ title: "Deep Latent Variable Models and Variational Inference"
 date: 2025-07-25
 categories: [machine-learning, variational-inference]
 tags: [deep-learning, latent-variables, variational-inference, neural-networks]
-math: true
+layout: single
+classes: wide
+use_math: true
+toc: true
+toc_label: "Table of Contents"
 ---
 
 <script type="text/x-mathjax-config">
@@ -19,7 +23,7 @@ math: true
     "HTML-CSS": { availableFonts: ["TeX"] }
   });
 </script>
-<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 
 $\newcommand{\posterior}{ p(z|x;\theta)}$
 $\newcommand{\prior}{ p(z)}$
