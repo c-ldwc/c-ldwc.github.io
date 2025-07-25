@@ -32,8 +32,6 @@ $\newcommand{\ELBO}{ \mathcal{L}(\theta, \phi; x)}$
 $\newcommand{\expectation}[2]{ \mathbb{E}_{#1}[#2]}$
 $\newcommand{\Normal}[2]{ \mathcal{N}(#1, #2)}$
 $\newcommand{\Real}{ \mathbb{R}}$
-$\renewcommand{\argmax}{ \operatorname*{argmax}}$
-$\renewcommand{\argmin}{ \operatorname*{argmin}}$
 
 <details>
   <summary>
