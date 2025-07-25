@@ -37,11 +37,11 @@ $\newcommand{\expectation}[2]{ \mathbb{E}_{#1}[#2]}$
 $\newcommand{\Normal}[2]{ \mathcal{N}(#1, #2)}$
 $\newcommand{\Real}{ \mathbb{R}}$
 
-<details>
+<details markdown="1">
   <summary>
     <strong>Mathematical Notation</strong>
     <br>
-    <em>Click to expand notation reference</em>
+    <em>Click to expand</em>
   </summary>
 
 **Probability Distributions:**
