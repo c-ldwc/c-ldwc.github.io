@@ -72,19 +72,21 @@ $\newcommand{\Real}{ \mathbb{R}}$
 I'm a sucker for deep learning with a probabilistic interpretation, because I'm always asking myself two questions when I fit models
   
  <ol type="a">
-  <li>Why should anything be linear?</li>
-  <li>Why shouldn't everything be Bayesian?</li>
+  <li>Why should I expect anything be linear?</li>
+  <li>Given that the answer to a is probably "You shouldn't", then why not parameterise a distribution with a neural net?</li>
 </ol>
 
-In this post I describe a class of deep learning models that conduct [variational Bayesian inference](https://en.wikipedia.org/wiki/Variational_Bayesian_methods), use them to build a clustering model, and show how the architecture can yield meaningful clusterings.
+In this post I describe a class of deep learning models that approximate posterior distributions via [variational Bayesian inference](https://en.wikipedia.org/wiki/Variational_Bayesian_methods), use them to build a clustering model, and show how the architecture can yield meaningful clusterings.
 
 ## Latent Variable Models
-A latent variable model assumes that observed data $\mathrm{x} \in \Real^T$ has a likelihood that depends on a variable $z$, and some generative model parameters $\theta$, $p(\mathrm{x} \mid z ; \theta)$. $z$ itself has prior $p(z)$. We can make these models "deep" by implementing the probability $p(x_t \mid z; \theta)$ using a neural network. For instance, we may assume $z \sim \Normal{\mu}{I}$ for $z \in \Real^k, k << T$ and $p(x_t\mid z; \theta, W) = \mathrm{softmax}(Wh_t)$ where $h_t$ is the output of a recursive neural network and $W$ is learnable. Latent models allow us to: 
+A latent variable model assumes that observed data $\mathrm{x} \in \Real^N$ has a likelihood that depends on a latent variable $z$ and some generative model parameters $\theta$, $p(\mathrm{x} \mid z ; \theta)$. $z$ itself has prior $p(z)$. We can make these models "deep" by implementing the probability $p(x \mid z; \theta)$ using a neural network. For instance, we may assume $z \sim \Normal{\mu}{I}$ for $z \in \Real^k, k < N$ and $p(x\mid z; \theta, W) = \mathrm{softmax}(Wh)$ where $h$ is the output of a neural network and $W$ is learnable. Latent models allow us to: 
 - Cluster documents by clustering using the latent representations
-- Generate new values of x by sampling $z$. This, to me, feels like sampling the posterior predictive distribution. Although it is not strictly the same thing because we are not sampling from $\posterior$. Text generation is largely the domain of transformers at the moment, but we can apply this to other autoregressive time series (i.e. financial data) or stationary distributions. 
-    - The resulting values of x can be used for anomaly detection, causal inference etc. 
+- Generate new values of x by sampling $z$. This, to me, feels like sampling the posterior predictive distribution. Although it is not strictly the same thing because we are not sampling from $\posterior$. 
+    - If we trust the resulting distributions. The generated values of x can be used for anomaly detection, causal inference etc. 
 
-I've been interested in deep learning for parameterisation of probability distributions for a while, because I constantly encounter situations where I want to flexibly describe how certain distributional parameters vary as functions of some data and I would like a posterior distribution to do inference. I've tried using Gaussian Processes for this, but there are issues of size because the covariance matrix scales quadratically with the number of data points and needs to be inverted. 
+I've been interested in deep learning for parameterisation of probability distributions for a while, because I constantly encounter situations where I want to flexibly describe how certain distributional parameters vary as functions of some data, don't want to commit to a functional form, and would like a posterior distribution to do inference. I've tried using Gaussian Processes for this, but there are issues of size because the covariance matrix scales quadratically with the number of data points and needs to be inverted. 
+
+The key sources for this blogpost are Kim, Wiseman and Rush's [A Tutorial on Deep Latent Variable Models of Natural Language](https://arxiv.org/abs/1812.06834) and the Bishop(s) [Deep Learning book](https://www.bishopbook.com/)
 
 ## Variational Inference
 
@@ -104,7 +106,7 @@ $$
 
 In other words, we can decompose the marginal likelihood into two components, the KL divergence between the variational approximation and the posterior, and the term $\ELBO := \expectation{\variational}{\left[log\ \frac{\fulllike}{\variational}\right]}$, which is called the Evidence Lower BOund, or ELBO. It is a lower bound on the marginal likelihood because the KL term is always nonnegative. Thus, optimising this bound allows us to optimise the likelihood. 
 
-Ideally, we have variational parameters $[\phi^{(i)}, ...,\phi^{(N)}]$ for each of the $N$ data points in our dataset. Summing over the log likelihood for our data, the lower bound becomes $\sum_{i-1}^{N}\mathcal{L}(\theta, \phi^{(i)}; x^{(i)})$ 
+Ideally, we have variational parameters $[\phi^{(i)}, ...,\phi^{(N)}]$ for each of the $N$ data points in our dataset. Summing over the log likelihood for our data, the lower bound becomes $\sum_{i=1}^{N}\mathcal{L}(\theta, \phi^{(i)}; x^{(i)})$ 
 
 ## Amortising The Variational Distribution
 
@@ -116,9 +118,9 @@ Now our objective can be maximised by maximising the expectation of the log-like
 
 ## Variational Autoencoders
 
-The amortization process combined with a neural network for generating the parameters of $\likelihood$ gives rise to an architecture known as a variational autoencoder. The first step in the model is to generate the parameters for the variational approximation to the posterior by passing x as input to an *encoder* network. Then $z$ is sampled from the posterior and passed as input to a *decoder* network, which generates parameters for a normal approximation to the likelihood.
+The amortisation process combined with a neural network for generating the parameters of $\likelihood$ gives rise to an architecture known as a variational autoencoder. The first step in the model is to generate the parameters for the variational approximation to the posterior by passing x as input to an *encoder* network. Then $z$ is sampled from the posterior and passed as input to a *decoder* network, which generates parameters for a normal approximation to the likelihood.
 
-These models have very exiting possibilities, you can generate data points by sampling the latent space, project your data onto a (hopefully meaningful) latent space, calculate posterior inference etc.
+These models have very exciting possibilities, you can generate data points by sampling the latent space, project your data onto a (hopefully meaningful) latent space, calculate posterior inference etc.
 
 ## Gaussian Mixture Variational Autoencoders
 
@@ -138,7 +140,7 @@ In English, there are three latent variables:
 - $w$, which determines the means and variances of the various clusters via the networks $\mu_{z_k}(w; \beta)$ and $\sigma^2_{z_k}(w; \beta)$. $w$ has prior $\mathcal{N}(0, I)$
 - $l$, which determines the likelihood via the networks $\mu(l; \theta)$ and $\sigma^2(x; \theta)$
 
-Interestingly, they calculate a posterior for z and reconstruct the ELBO in such a way that the model need not sample the discrete variable z in the forward pass, retaining differentiability. Note that sampling a normal distribution for the likelihood and variational distributions is differentiable because we can generate $\mu$ and $\sigma$, then sample $n$ from $\Normal{0}{1}$ and do the old fashioned $x = \mu + n\sigma$, which is $\Normal{\mu}{\sigma^2}$. This maintains differentiability because the sampled x is a differentiable function of the network outputs $\mu$ and $\sigma$.
+Interestingly, they calculate a posterior for z and reconstruct the ELBO in such a way that the model need not sample the discrete variable z in the forward pass, retaining differentiability. Note that sampling a normal distribution for the likelihood and variational distributions is differentiable because we can generate $\mu$ and $\sigma$, then sample $n$ from $\Normal{0}{1}$ and do the old fashioned $x = \mu + n\sigma$, which results in $x \sim \Normal{\mu}{\sigma^2}$. This maintains differentiability because the sampled x is a differentiable function of the network outputs $\mu$ and $\sigma$.
 
 What the GMVAE paper amounts to is a variational autoencoder consisting of an encoder for $w$ and $l$, a network for the conditional prior of $l$, a decoder network that maps $l \to x$, and a slightly more complicated loss function than the standard ELBO decomposition. The details are in the paper.
 
@@ -389,8 +391,16 @@ class GMVAE(nn.Module):
 
 ## Reproducing The Spiral Data Experiment
 
-The GMVAE paper describes a clustering experiment where the data consists of points in 2D space sampled from the arcs of 5 circles. Their data is on github, so to test my implementation above I attempted to replicate their architecture (given in their appendix A) and the results of their experiment. I used the same Adam setup as they did and clamped the z-prior term at 1.5 (their figure 3b). Training with my implementation is slightly brittle. Sometimes the the z prior term goes to zero even with clamping and the resulting clusters are heavily overlapping. The authors interpret this as due as an over-regularlisation thanks to the prior term. I think my implementation is not 100% correct. 
+The GMVAE paper describes a clustering experiment where the data consists of points in 2D space sampled from the arcs of 5 circles. Their data is on github, so to test my implementation above I attempted to replicate their architecture (given in their appendix A) and the results of their experiment. I used the same Adam setup as they did and clamped the z-prior term at 1.5 (their figure 3b). Training with my implementation is slightly brittle. Sometimes the the z prior term goes to zero even with clamping and the resulting clusters are heavily overlapping (i.e. model exhibits what is known as "posterior collapse" and uses the prior cluster probabilities of $\frac{1}{k}$). 
 
 Still, when this doesn't occur, the resulting clusters are meaningful. The top plot below shows KDE contours generated by setting the cluster to a particular value, sampling from the latent space associated with that cluster and decoding those samples. The points in the bottom plot have colours that correspond to $\underset{z}{\mathrm{argmax}}\ p(z\mid l,w,y)$, the most probable cluster for each data point according to the z-posterior.
 
 ![png](/assets/images/GMVAE/all_cluster_densities.png){: .align-center .width = "70%" .height=auto}
+
+GMVAE is able to cluster points in this space meaningfully and the GMVAE is able to cluster points in this space meaningfully and the results demonstrate that the model has learned to associate different regions of the latent space with different clusters in the original data space.
+
+## Summary
+
+Deep latent variable models offer a compelling framework for probabilistic machine learning that goes beyond the limitations of linear models and fixed distributional assumptions. By parameterising probability distributions with neural networks, we can capture complex, non-linear relationships in data while maintaining a principled Bayesian interpretation.
+
+The GMVAE architecture showcases how we can extend standard variational autoencoders to handle discrete latent variables for clustering tasks. Despite some training brittleness (a common theme with these models), the approach successfully learns meaningful cluster assignments without requiring discrete sampling in the forward pass, preserving differentiability throughout.
