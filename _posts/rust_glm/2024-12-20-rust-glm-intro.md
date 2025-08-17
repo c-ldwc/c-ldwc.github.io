@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Fast Generalized Linear Models in Rust"
+title:  "Building a Generalized Linear Model Crate in Rust"
 date:   2025-07-05
 categories: Statistics Rust
 layout: single
@@ -24,7 +24,7 @@ toc_label: "Table of Contents"
   </script>
 <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 $\renewcommand{\hat}[1]{\widehat{#1}}$
-# Building Fast GLMs in Rust
+# Building a GLM Rust
 
 Generalized Linear Models (GLMs) extend ordinary linear regression to handle non-normal response distributions and are a core part of applied statistics that every data scientist uses. While Python and R have mature statistical libraries, Rust's ecosystem for statistical computing is still developing. This post walks through a from-scratch implementation of GLMs in Rust that achieves ~300ms fits on a large (2.5M cell design matrix) dataset.
 
@@ -318,7 +318,7 @@ Log-lik:   -135247.8934
 ```
 
 ## Performance and Extensions
-Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 variables with [Criterion](https://bheisler.github.io/criterion.rs/book/criterion_rs.html) gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the fact that the benchmarking included the data simulation and the crate lacks any serious performance optimisations (other than avoiding matmuls with large diagonal matrices).
+Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 variables with [Criterion](https://bheisler.github.io/criterion.rs/book/criterion_rs.html) gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the fact that the crate lacks any serious performance optimisations (other than avoiding matmuls with large diagonal matrices).
 
 In the future, we could speed this up with
 
