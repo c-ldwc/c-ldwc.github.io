@@ -24,9 +24,10 @@ toc_label: "Table of Contents"
   </script>
 <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 $\renewcommand{\hat}[1]{\widehat{#1}}$
-# Building a GLM Rust
 
-Generalized Linear Models (GLMs) extend ordinary linear regression to handle non-normal response distributions and are a core part of applied statistics that every data scientist uses. While Python and R have mature statistical libraries, Rust's ecosystem for statistical computing is still developing. This post walks through a from-scratch implementation of GLMs in Rust that achieves ~300ms fits on a large (2.5M cell design matrix) dataset.
+# Building a GLM Library in Rust
+
+Generalized Linear Models (GLMs) extend ordinary linear regression to handle non-normal response distributions and are a core part of applied statistics that every data scientist uses. While Python and R have mature statistical libraries, Rust's ecosystem for statistical computing is still developing. This post walks through a from-scratch implementation of GLMs in Rust.
 
 The complete implementation supports Poisson and Binomial families with Newton-Raphson optimization for parameter estimation. All code is available in the [`rust_glm`](https://github.com/c-ldwc/rust_glm) repository.
 
@@ -76,17 +77,17 @@ $$\frac{\partial \ell}{\partial \beta} = X^T W G (y - \mu)$$
 
 Where $\mu = g^{-1}(X\beta)$ and the matrices are defined as:
 
-$$\alpha(\mu_i) = 1 + (y_i - \mu_i)\left\{\frac{V'(\mu_i)}{V(\mu_i)} + \frac{g''(\mu_i)}{g'(\mu_i)}\right\}$$ 
+$$\alpha(\mu_i) = 1 + (y_i - \mu_i)\left\{\frac{V'(\mu_i)}{V(\mu_i)} + \frac{g''(\mu_i)}{g'(\mu_i)}\right\}$$
 
 where $g$ is the link function
 
-$$G = \textrm{diag}\left\{\frac{g'(\mu_i)}{\alpha(\mu_i)}\right\}$$ 
+$$G = \textrm{diag}\left\{\frac{g'(\mu_i)}{\alpha(\mu_i)}\right\}$$
 
-contains scaled link derivatives, and 
+contains scaled link derivatives, and
 
 $$W = \textrm{diag}(w_i)$$
 
-where 
+where
 
 $$w_i = \frac{\alpha(\mu_i)}{g'(\mu_i)^2 V(\mu_i)}$$
 
@@ -114,6 +115,7 @@ fn hessian(&self, x: &DVector<f64>) -> DMatrix<f64> {
     neg_X_t * self.get_data().scale(1.0/self.scale())
 }
 ```
+
 Because the hessian and gradient are calculated using the core exponential family functions, [both are part of the trait](https://github.com/c-ldwc/rust_glm/blob/67a6d065efa358f486bd7722c1528346913a8670/src/families/family.rs#L20) and need not be implemented directly. I think there is probably room for speed optimisations here with specific gradient or hessian functions for particular families
 
 ## Poisson Regression
@@ -318,6 +320,7 @@ Log-lik:   -135247.8934
 ```
 
 ## Performance and Extensions
+
 Currently, benchmarking a Binomial family optimisation with 500,000 observations and 5 variables with [Criterion](https://bheisler.github.io/criterion.rs/book/criterion_rs.html) gives a mean time of 318.47 ms and a 95%CI of [315.99 ms, 321.08 ms]. This is pretty fast despite the fact that the crate lacks any serious performance optimisations (other than avoiding matmuls with large diagonal matrices).
 
 In the future, we could speed this up with
