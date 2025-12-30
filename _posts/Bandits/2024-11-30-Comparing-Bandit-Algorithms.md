@@ -26,15 +26,15 @@ use_math: true
 $\renewcommand{\hat}[1]{\widehat{#1}}$
 # Multi Armed Bandit Simulations
 
-In making a choice of action (i.e. what content to post to a page, what drug to give a patient, what weight to give an asset in a portfolio) there is a tradeoff between exploring our choices in order to better understand  their outcomes, or exploiting the action that has led to the best outcomes in the past. Multi-armed bandit algorithms choose actions and attempt to balance exploitation and exploration in order to maximise a target metric. They are commonly applied in marketing, finance, conversion rate optimisation and clinical trials. 
+In making a choice of action (i.e., what content to post to a page, what drug to give a patient, what weight to give an asset in a portfolio), there is a tradeoff between exploring our choices in order to better understand their outcomes, or exploiting the action that has led to the best outcomes in the past. Multi-armed bandit algorithms choose actions and attempt to balance exploitation and exploration in order to maximise a target metric. They are commonly applied in marketing, finance, conversion rate optimisation, and clinical trials. 
 
-In this notebook I compare simulations from two popular bandit algorithms - Thompson sampling, which is based on the Bayesian update to a binomial mean from a beta prior, and the Upper Confidence Bound algorithm, which uses Hoeffding's inequality to bound the mean. 
+In this notebook, I compare simulations from two popular bandit algorithms—Thompson sampling, which is based on the Bayesian update to a binomial mean from a beta prior, and the Upper Confidence Bound algorithm, which uses Hoeffding's inequality to bound the mean. 
 
 The algorithms are based on Alex Slivkins' excellent lecture notes [Advanced Topics in Theory of Computing: Bandits, Experts, and Games](https://www.cs.umd.edu/~slivkins/CMSC858G-fall16/)
 
-My bandit algorithms, reward and some utility functions are packaged in the `bandits` module imported below. The software lives in my [Github](https://github.com/c-ldwc/Portfolio/tree/main/Bandits/bandits). The algorithms are found in the [bandit algorithm classes file](https://github.com/c-ldwc/Portfolio/blob/main/Bandits/bandits/banditClasses.py). 
+My bandit algorithms, reward, and some utility functions are packaged in the `bandits` module imported below. The software lives in my [GitHub](https://github.com/c-ldwc/Portfolio/tree/main/Bandits/bandits). The algorithms are found in the [bandit algorithm classes file](https://github.com/c-ldwc/Portfolio/blob/main/Bandits/bandits/banditClasses.py). 
 
-I simulated bandits with a time horizon $T$ of 10,000. Each bandit was simulated 500 times. Giving me 1,000 observations at each T for both UCB and Thompson sampling. The bandits sampled from 2 arms, both returned Bernoulli rewards with p = 0.2 and p = 0.3. We want to know how our algorithm performs, on average, relative to the best performance. This is known as regret and is defined as 
+I simulated bandits with a time horizon $T$ of 10,000. Each bandit was simulated 500 times, giving me 1,000 observations at each $T$ for both UCB and Thompson sampling. The bandits sampled from 2 arms; both returned Bernoulli rewards with $p = 0.2$ and $p = 0.3$. We want to know how our algorithm performs, on average, relative to the best performance. This is known as regret, and is defined as 
 $$R = \Sigma_{i=1}^{T}\left[\mu(a^*) - \mu(a_t)\right]$$ 
 
 where $\mu(a^*)$ is the mean for the best action and $\mu(a_t)$ is the mean for the action chosen at time $t$. For our rewards it is 
@@ -98,9 +98,9 @@ stat_summaries = bandit_summaries(sims, arm_mu)
 # Stationary Rewards
 ## Mean reward for each action over time 
 
-Here we see how the mean rewards for each action over each iteration of the bandit algos evolve. Each blue line is a run of the bandit simulator. The x axis is the $t^{th}$ performance of the relevant action each run. At x = 1000 in the top left plot we see the mean reward for the first action over $t\leq1000$ for all Thompson sampling runs that chose that action 1000 or more times. 
+Here we see how the mean rewards for each action over each iteration of the bandit algorithms evolve. Each blue line is a run of the bandit simulator. The $x$-axis is the $t^{th}$ performance of the relevant action each run. At $x = 1000$ in the top left plot, we see the mean reward for the first action over $t\leq1000$ for all Thompson sampling runs that chose that action 1000 or more times. 
 
-We can see that Thompson sampling tends to learn about the poorer action (k = 0) early on and rarely runs it more than about 400 times. The UCB algorithm however takes slightly longer for its intervals to converge to a point where this action is obviously not a winner. 
+We can see that Thompson sampling tends to learn about the poorer action ($k = 0$) early on and rarely runs it more than about 400 times. The UCB algorithm, however, takes slightly longer for its intervals to converge to a point where this action is obviously not a winner. 
 
 
 ```python
@@ -120,7 +120,7 @@ mean_plots(stat_summaries["running_means"]);
 
 
 ## Regret
-The plots below show the cumulative regret at each point during a simulation run. Each line represents a bandit simulation. Thompson sampling appears initially linear (i.e. described by a power law because these are log-log plots) and levels off around t = 1000. UCB does not show this pattern and attains a higher regret than almost all Thompson Sampling simulations. 
+The plots below show the cumulative regret at each point during a simulation run. Each line represents a bandit simulation. Thompson sampling appears initially linear (i.e., described by a power law because these are log-log plots) and levels off around $t = 1000$. UCB does not show this pattern and attains a higher regret than almost all Thompson sampling simulations. 
 
 
 ```python
@@ -157,9 +157,9 @@ bound_plots(sims);
 
 # Non-Stationary Rewards
 
-In addition to the above stationary rewards, we want to see what happens when the mean is changing over time. For e-commerce, this is pretty common. Conversion is more likely at certain times of the week (i.e. weekends), or year (i.e. sales events). To simulate this I have a reward generator that increases the Bernoulli parameter by .1 every 6th and 7th day - corresponding to a weekend bump in conversions. Note that this preserves the ranking of the actions. 
+In addition to the above stationary rewards, we want to see what happens when the mean is changing over time. For e-commerce, this is pretty common. Conversion is more likely at certain times of the week (i.e., weekends), or year (i.e., sales events). To simulate this, I have a reward generator that increases the Bernoulli parameter by 0.1 every 6th and 7th day—corresponding to a weekend bump in conversions. Note that this preserves the ranking of the actions. 
 
-I do this because these two algorithms are predicated on stationary reward distributions, but such distributions are very rare for almost all real-world metrics we care about. Checking that the algorithms' decisions are robust to deviations from their ideal cases is vital if we want to deploy these to automate decision making.
+I do this because these two algorithms are predicated on stationary reward distributions, but such distributions are very rare for almost all real-world metrics we care about. Checking that the algorithms' decisions are robust to deviations from their ideal cases is vital if we want to deploy these to automate decision-making.
 
 The plots below show very little in terms of interesting changes due to the non-stationarity - probably because the weekend bump preserves the order of the two arms' means. 
 
@@ -234,5 +234,3 @@ bound_plots(ns_sim);
 
     
 ![png](/assets/images/2024-11-30%20Comparing%20Bandit%20Algorithms_16_1.png){: .align-center}
-    
-

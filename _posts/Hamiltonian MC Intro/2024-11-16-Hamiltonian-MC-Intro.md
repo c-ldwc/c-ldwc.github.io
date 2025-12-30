@@ -48,9 +48,9 @@ n_param = p + 1
 ```
 # Hamiltonian Monte Carlo
 
-Markov Chain Monte Carlo (MCMC) algorithms draw samples from target probability distributions. The resulting samples can be used to approximate integrals (i.e. expectations) over the distribution being targeted. They are the workhorse of Bayesian computation, where posteriors are often too complex to solve without algorithmic tools, and are responsible for computation in the popular Bayesian software packages Stan and PyMC. 
+Markov Chain Monte Carlo (MCMC) algorithms draw samples from target probability distributions. The resulting samples can be used to approximate integrals (i.e., expectations) over the distribution being targeted. They are the workhorse of Bayesian computation, where posteriors are often too complex to solve without algorithmic tools, and are responsible for computation in the popular Bayesian software packages Stan and PyMC. 
 
-I use PyMC fairly regularly, but my understanding of the MCMC algo it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in the Github folder ([`MCMC/`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC)) are part of a self learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.
+I use PyMC fairly regularly, but my understanding of the MCMC algorithm it uses (a variant of HMC) was largely based on intuition. The analyses in the notebooks in the GitHub folder ([`MCMC/`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC)) are part of a self-learning exercise where I use an implementation of Hamiltonian Monte Carlo (HMC) that I built in order to better understand how this class of algorithms works.
 
 The HMC algorithm is based on the exposition in [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapters 10, 11, and 12. The MCMC functions live in [`samplers/samplers.py`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/samplers.py). There are some MCMC diagnostics in [`samplers/utils.py`](https://github.com/c-ldwc/Portfolio/tree/main/MCMC/samplers/utils.py)
 
@@ -60,9 +60,9 @@ The `hmc` function is a Hamiltonian Monte Carlo (HMC) sampler.  It requires
 - `grad`: the gradient of the distribution with regard to the parameters and a starting point for the parameter samples. 
 - `n_iters`: the number of iterations for the algorithm
 - `starting`: a starting point for the samples
-- `eps`, `L`, `M`: Tuning parameters for the algorithms Hamiltonian dynamics. See [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapter 12.
+- `eps`, `L`, `M`: Tuning parameters for the algorithm's Hamiltonian dynamics. See [Gelman et al.](https://stat.columbia.edu/~gelman/book/) chapter 12.
 
-The algorithm generates a "momentum" variable at the start of each iteration. It uses this and the gradient to explore the target log density through a discrete approximation to hamiltonian dynamics in physics. At the end of an iteration, it computes a ratio $r$ of the target density at the starting values and the final location of the iteration. It accepts the new location as a sample with probability $\min(r,1)$ - this is the same as the Metropolis Hastings algorithm's acceptance step. Taking a ratio (actually a difference because we work with logs) means that normalisation constants cancel and we can work with unnormalised log densities as our target function. 
+The algorithm generates a "momentum" variable at the start of each iteration. It uses this and the gradient to explore the target log density through a discrete approximation to Hamiltonian dynamics in physics. At the end of an iteration, it computes a ratio $r$ of the target density at the starting values and the final location of the iteration. It accepts the new location as a sample with probability $\min(r,1)$—this is the same as the Metropolis-Hastings algorithm's acceptance step. Taking a ratio (actually a difference because we work with logs) means that normalisation constants cancel and we can work with unnormalised log densities as our target function. 
 
 At the end of the iterations, we have a "chain" of samples. A properly-tuned HMC run will converge to the target density, but that convergence takes time, so we drop a fixed number of starting iterations as a "warmup". Convergence to the target density can be measured by visual and diagnostic tests that I discuss later.
 
@@ -170,9 +170,9 @@ fig.tight_layout();
 
 ## Linear Regression
 
-This is a model for a linear regression with gaussian errors, an inverse gamma prior $\mathrm{inv\_\Gamma}(1.5, 1)$ on the variance of the errors and independent normal priors on the coefficients of the model.
+This is a model for a linear regression with Gaussian errors, an inverse gamma prior $\mathrm{inv\_\Gamma}(1.5, 1)$ on the variance of the errors, and independent normal priors on the coefficients of the model.
 
-Because we want to constrain $\sigma^2$ to be positive. We work with $\sigma^2 = \exp(k)$ so we can let the sampler run over the real line for this parameter[^2]. Working with $\exp(k)$ requires a reparametisation of the prior density for $\sigma^2$
+Because we want to constrain $\sigma^2$ to be positive, we work with $\sigma^2 = \exp(k)$ so we can let the sampler run over the real line for this parameter[^2]. Working with $\exp(k)$ requires a reparameterisation of the prior density for $\sigma^2$.
 
 The prior on the variance is now
 
@@ -320,7 +320,7 @@ param_scatter(
     
 
 ## Computing things we care about
-Using these samples we can estimate the expection of whatever function of the samples that we like. First, we need to drop the warmup samples and eliminate the chain dimension from our chains variable. We did this above when creating `params`.
+Using these samples, we can estimate the expectation of whatever function of the samples that we like. First, we need to drop the warmup samples and eliminate the chain dimension from our chains variable. We did this above when creating `params`.
 
 Firstly, we can see that the sample means are close to the true values. 
 
@@ -374,7 +374,7 @@ print(
     The probability that the second variable has a larger effect on our outcome than the others is 0.0
 
 
-We can compute realisations from the distributions indexed by our samples for each observation - the "posterior predictive distribution" - and compare our observations to the resulting distributions. This allows us to plot the histograms of the distributions and a tail p-value  for each observation . In the plots below I plot the difference between the predictions and the observation corresponding to them, so 0 is the true value. Very low or very high p-values are cause for concern, but this is a moot point here because the model corresponds perfectly to the data generating process. 
+We can compute realisations from the distributions indexed by our samples for each observation—the "posterior predictive distribution"—and compare our observations to the resulting distributions. This allows us to plot the histograms of the distributions and a tail p-value for each observation. In the plots below, I plot the difference between the predictions and the observation corresponding to them, so 0 is the true value. Very low or very high p-values are cause for concern, but this is a moot point here because the model corresponds perfectly to the data-generating process. 
 
 
 ```python

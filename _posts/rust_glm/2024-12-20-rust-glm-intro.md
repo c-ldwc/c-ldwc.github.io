@@ -33,7 +33,7 @@ The complete implementation supports Poisson and Binomial families with Newton-R
 
 ## Core Architecture
 
-The library centers around a [Family trait](https://github.com/c-ldwc/rust_glm/blob/main/src/families/family.rs) that describes the necessary functions for the exponential family members and separates it from the optimization machinery:
+The library centers around a [Family trait](https://github.com/c-ldwc/rust_glm/blob/main/src/families/family.rs) that describes the necessary functions for the exponential family members and separates it from the optimisation machinery:
 
 ```rust
 pub trait Family {
@@ -43,11 +43,11 @@ pub trait Family {
     fn link(&self, mu: &DVector<f64>) -> DVector<f64>;
     fn inv_link(&self, l: &DVector<f64>) -> DVector<f64>;
     fn log_lik(&self, mu: &DVector<f64>) -> f64;
-    //Plus functions for various derivatives as well as the hessian and gradient
+    // Plus functions for various derivatives as well as the Hessian and gradient
 }
 ```
 
-The `GLM` struct ingests a struct that has the family trait and uses this to inform the optimisation:
+The `GLM` struct ingests a struct that has the Family trait and uses this to inform the optimisation:
 
 ```rust
 pub struct GLM<F: Family> {
@@ -97,7 +97,7 @@ The Hessian (Fisher information) is:
 
 $$H = -X^T W X / \phi$$
 
-Both the [gradient](https://github.com/c-ldwc/rust_glm/blob/67a6d065efa358f486bd7722c1528346913a8670/src/families/family.rs#L36) and [hessian](https://github.com/c-ldwc/rust_glm/blob/67a6d065efa358f486bd7722c1528346913a8670/src/families/family.rs#L20) functions avoid large matrix multiplications by scaling the relevant parts of the leftmost matrix in the appropriate definition:
+Both the [gradient](https://github.com/c-ldwc/rust_glm/blob/67a6d065efa358f486bd7722c1528346913a8670/src/families/family.rs#L36) and [Hessian](https://github.com/c-ldwc/rust_glm/blob/67a6d065efa358f486bd7722c1528346913a8670/src/families/family.rs#L20) functions avoid large matrix multiplications by scaling the relevant parts of the leftmost matrix in the appropriate definition:
 
 ```rust
 fn hessian(&self, x: &DVector<f64>) -> DMatrix<f64> {
@@ -116,7 +116,7 @@ fn hessian(&self, x: &DVector<f64>) -> DMatrix<f64> {
 }
 ```
 
-Because the hessian and gradient are calculated using the core exponential family functions, [both are part of the trait](https://github.com/c-ldwc/rust_glm/blob/67a6d065efa358f486bd7722c1528346913a8670/src/families/family.rs#L20) and need not be implemented directly. I think there is probably room for speed optimisations here with specific gradient or hessian functions for particular families
+Because the Hessian and gradient are calculated using the core exponential family functions, [both are part of the trait](https://github.com/c-ldwc/rust_glm/blob/67a6d065efa358f486bd7722c1528346913a8670/src/families/family.rs#L20) and need not be implemented directly. I think there is probably room for speed optimisations here with specific gradient or Hessian functions for particular families.
 
 ## Poisson Regression
 
